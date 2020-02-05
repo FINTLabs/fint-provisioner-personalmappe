@@ -20,6 +20,7 @@ import no.fint.personalmappe.util.Util;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.model.GraphQLQuery;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -103,12 +104,12 @@ public class ProvisionService {
         personalressursResources.getContent()
                 .sort(Comparator.comparing(resource -> Optional.ofNullable(resource.getBrukernavn())
                         .map(Identifikator::getIdentifikatorverdi)
-                        .orElse("XXX")));
+                        .filter(StringUtils::isAlpha)
+                        .orElse("ZZZ")));
 
-        personalressursResources.getContent().parallelStream()
+        personalressursResources.getContent().stream().limit(LIMIT)
                 .map(PersonalressursResource::getBrukernavn)
                 .map(Identifikator::getIdentifikatorverdi)
-                .limit(LIMIT)
                 .forEach(username -> {
                     List<PersonalmappeResource> personalmappeResources = getPersonalmappeResources(orgId, username);
                     if (personalmappeResources.size() == 1) {
@@ -123,6 +124,7 @@ public class ProvisionService {
                     } else {
                         log.debug("({}) {} personalmapper generated for employee {}", orgId, personalmappeResources.size(), username);
                     }
+                    log.info(username);
                 });
     }
 
@@ -164,7 +166,7 @@ public class ProvisionService {
                             .subscribe();
                 })
                 .doOnError(WebClientResponseException.class, clientResponse ->
-                        log.error("{} {}", clientResponse.getStatusCode(), clientResponse.getResponseBodyAsString()))
+                        log.debug("{} {}", clientResponse.getStatusCode(), clientResponse.getResponseBodyAsString()))
                 .subscribe();
     }
 
