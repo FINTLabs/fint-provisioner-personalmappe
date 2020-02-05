@@ -2,6 +2,8 @@ package no.fint.personalmappe.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.Link;
@@ -52,7 +54,8 @@ public class ProvisionService {
 
     private static final GraphQLQuery graphQLQuery = Util.getGraphQLQuery("personalressurs.graphql");
 
-    private static final long LIMIT = 20;
+    @Setter
+    private static int LIMIT = 20;
 
     public ProvisionService(FintRepository fintRepository, MongoDBRepository mongoDBRepository, OrganisationProperties organisationProperties) {
         this.fintRepository = fintRepository;
@@ -64,7 +67,7 @@ public class ProvisionService {
     public void runFull() {
         organisationProperties.getOrganisations().keySet()
                 .forEach(orgId -> {
-                    log.info("{{}) start full provisioning", orgId);
+                    log.info("({}) start full provisioning", orgId);
 
                     fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint)
                             .blockOptional()
@@ -83,7 +86,7 @@ public class ProvisionService {
     public void runDelta() {
         organisationProperties.getOrganisations().keySet()
                 .forEach(orgId -> {
-                    log.info("{{}) start delta provisioning", orgId);
+                    log.info("({}) start delta provisioning", orgId);
 
                     fintRepository.getUpdates(orgId, PersonalressursResources.class, personalressursEndpoint)
                             .blockOptional()
@@ -97,9 +100,15 @@ public class ProvisionService {
     }
 
     private void createPersonalmappeResources(String orgId, PersonalressursResources personalressursResources) {
-        personalressursResources.getContent().stream().limit(LIMIT)
+        personalressursResources.getContent()
+                .sort(Comparator.comparing(resource -> Optional.ofNullable(resource.getBrukernavn())
+                        .map(Identifikator::getIdentifikatorverdi)
+                        .orElse("XXX")));
+
+        personalressursResources.getContent().parallelStream()
                 .map(PersonalressursResource::getBrukernavn)
                 .map(Identifikator::getIdentifikatorverdi)
+                .limit(LIMIT)
                 .forEach(username -> {
                     List<PersonalmappeResource> personalmappeResources = getPersonalmappeResources(orgId, username);
                     if (personalmappeResources.size() == 1) {

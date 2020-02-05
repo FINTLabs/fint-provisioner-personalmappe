@@ -24,6 +24,12 @@ public class TestController {
         this.mongoDBRepository = mongoDBRepository;
     }
 
+    @GetMapping("/{orgId}/provision/{limit}")
+    public void getPersonalmappeResource(@PathVariable String orgId, @PathVariable int limit) {
+        ProvisionService.setLIMIT(limit);
+        provisionService.runFull();
+    }
+
     @GetMapping("/{orgId}/get/{username}")
     public List<PersonalmappeResource> getPersonalmappeResource(@PathVariable String orgId, @PathVariable String username) {
         return provisionService.getPersonalmappeResources(orgId, username);
