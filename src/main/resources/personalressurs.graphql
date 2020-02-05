@@ -1,0 +1,63 @@
+query ($brukernavn: String) {
+    personalressurs(brukernavn: $brukernavn) {
+        arbeidsforhold {
+            gyldighetsperiode {
+                start
+                slutt
+            }
+            hovedstilling
+            arbeidssted {
+                organisasjonsId {
+                    identifikatorverdi
+                }
+                organisasjonsKode {
+                    identifikatorverdi
+                }
+                leder {
+                    ansattnummer {
+                        identifikatorverdi
+                    }
+                    brukernavn {
+                        identifikatorverdi
+                    }
+                }
+                overordnet {
+                    organisasjonsId {
+                        identifikatorverdi
+                    }
+                    organisasjonsKode {
+                        identifikatorverdi
+                    }
+                    leder {
+                        ansattnummer {
+                            identifikatorverdi
+                        }
+                        brukernavn {
+                            identifikatorverdi
+                        }
+                    }
+                }
+            }
+            personalressurs {
+                ansattnummer {
+                    identifikatorverdi
+                }
+                brukernavn {
+                    identifikatorverdi
+                }
+                person {
+                    fodselsnummer {
+                        identifikatorverdi
+                    }
+                    navn {
+                        fornavn
+                        etternavn
+                    }
+                }
+                personalressurskategori {
+                    kode
+                }
+            }
+        }
+    }
+}

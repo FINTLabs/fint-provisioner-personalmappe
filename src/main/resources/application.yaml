@@ -1,0 +1,34 @@
+fint:
+  endpoints:
+    personalressurs: https://beta.felleskomponent.no/administrasjon/personal/personalressurs
+    personalmappe: https://alpha.felleskomponent.no/administrasjon/personal/personalmappe
+    graphql: https://beta.felleskomponent.no/graphql/graphql
+  organisations:
+    viken:
+      username:
+      password:
+      personalressurskategori:
+        - F
+        - M
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          viken:
+            client-id:
+            client-secret:
+            authorization-grant-type: password
+            scope: fint-client
+            provider: fint
+        provider:
+          fint:
+            token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
+  data:
+    mongodb:
+      uri:
+
+server:
+  servlet:
+    context-path: /tjenester/personalmappe
