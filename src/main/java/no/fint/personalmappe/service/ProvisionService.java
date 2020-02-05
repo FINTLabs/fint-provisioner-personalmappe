@@ -124,7 +124,6 @@ public class ProvisionService {
                     } else {
                         log.debug("({}) {} personalmapper generated for employee {}", orgId, personalmappeResources.size(), username);
                     }
-                    log.info(username);
                 });
     }
 
