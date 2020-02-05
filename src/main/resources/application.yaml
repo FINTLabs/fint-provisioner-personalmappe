@@ -1,8 +1,8 @@
 fint:
   endpoints:
-    personalressurs: https://beta.felleskomponent.no/administrasjon/personal/personalressurs
+    personalressurs: https://api.felleskomponent.no/administrasjon/personal/personalressurs
     personalmappe: https://alpha.felleskomponent.no/administrasjon/personal/personalmappe
-    graphql: https://beta.felleskomponent.no/graphql/graphql
+    graphql: https://api.felleskomponent.no/graphql/graphql
   organisations:
     viken:
       username:
