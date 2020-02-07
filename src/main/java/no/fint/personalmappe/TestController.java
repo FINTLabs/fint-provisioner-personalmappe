@@ -27,7 +27,7 @@ public class TestController {
     @GetMapping("/{orgId}/provision/{limit}")
     public void getPersonalmappeResource(@PathVariable String orgId, @PathVariable int limit) {
         ProvisionService.setLIMIT(limit);
-        provisionService.runFull();
+        provisionService.full();
     }
 
     @GetMapping("/{orgId}/get/{username}")
@@ -40,7 +40,7 @@ public class TestController {
         List<PersonalmappeResource> personalmappeResources = getPersonalmappeResource(orgId, username);
 
         if (personalmappeResources.size() == 1) {
-            provisionService.createPersonalmappeResource(orgId, personalmappeResources.get(0));
+            provisionService.provision(orgId, personalmappeResources.get(0));
             TimeUnit.SECONDS.sleep(1);
 
             return mongoDBRepository.findById(String.format("%s_%s", orgId, Util.getNIN(personalmappeResources.get(0))))
@@ -51,13 +51,11 @@ public class TestController {
         return ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/{orgId}/put/{username}")
-    public ResponseEntity<?> putPersonalmappeResource(@PathVariable String orgId, @PathVariable String username,
-                                                      @RequestBody PersonalmappeResource personalmappeResource) throws InterruptedException {
-
+    @PutMapping("/{orgId}/put")
+    public ResponseEntity<?> putPersonalmappeResource(@PathVariable String orgId, @RequestBody PersonalmappeResource personalmappeResource) throws InterruptedException {
         mongoDBRepository.findById(String.format("%s_%s", orgId, Util.getNIN(personalmappeResource)))
                 .ifPresent(mongoDBPersonalmappe ->
-                        provisionService.updatePersonalmappeResource(orgId, personalmappeResource, mongoDBPersonalmappe.getAssociation()));
+                        provisionService.provision(orgId, personalmappeResource));
         TimeUnit.SECONDS.sleep(1);
 
         return mongoDBRepository.findById(String.format("%s_%s", orgId, Util.getNIN(personalmappeResource)))
