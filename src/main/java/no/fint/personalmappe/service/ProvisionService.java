@@ -48,7 +48,7 @@ public class ProvisionService {
     @Setter
     private static int LIMIT = 20;
 
-    private GraphQLQuery graphQLQuery = Util.getGraphQLQuery("personalressurs.graphql");
+    private final GraphQLQuery graphQLQuery = Util.getGraphQLQuery("personalressurs.graphql");
 
     public ProvisionService(FintRepository fintRepository, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, ResponseHandlerService responseHandlerService) {
         this.fintRepository = fintRepository;

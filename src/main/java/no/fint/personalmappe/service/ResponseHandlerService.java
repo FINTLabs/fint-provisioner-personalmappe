@@ -108,7 +108,7 @@ public class ResponseHandlerService {
     /*
     TODO - set reasonable values
      */
-    public Retry<?> finalStatusPending = Retry.anyOf(FinalStatusPendingException.class)
+    public final Retry<?> finalStatusPending = Retry.anyOf(FinalStatusPendingException.class)
             .fixedBackoff(Duration.ofSeconds(5))
             .retryMax(2)
             .doOnRetry(exception -> log.info("{}", exception));
