@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -43,7 +44,7 @@ public class TestController {
             provisionService.provision(orgId, personalmappeResources.get(0));
             TimeUnit.SECONDS.sleep(1);
 
-            return mongoDBRepository.findById(String.format("%s_%s", orgId, Util.getNIN(personalmappeResources.get(0))))
+            return mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResources.get(0)))
                     .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
                     .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
         }
@@ -53,13 +54,28 @@ public class TestController {
 
     @PutMapping("/{orgId}/put")
     public ResponseEntity<?> putPersonalmappeResource(@PathVariable String orgId, @RequestBody PersonalmappeResource personalmappeResource) throws InterruptedException {
-        mongoDBRepository.findById(String.format("%s_%s", orgId, Util.getNIN(personalmappeResource)))
+        mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResource))
                 .ifPresent(mongoDBPersonalmappe ->
                         provisionService.provision(orgId, personalmappeResource));
         TimeUnit.SECONDS.sleep(1);
 
-        return mongoDBRepository.findById(String.format("%s_%s", orgId, Util.getNIN(personalmappeResource)))
+        return mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResource))
                 .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
                 .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
+    }
+
+    @PostMapping("/post")
+    public ResponseEntity<?> dummyPost() {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/tjenester/personalmappe/status")).build();
+    }
+
+    @PutMapping("/put")
+    public ResponseEntity<?> dummyPut() {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/tjenester/personalmappe/status")).build();
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<?> dummyStatus() {
+        return ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("http://localhost:8080/tjenester/personalmappe/put")).build();
     }
 }
