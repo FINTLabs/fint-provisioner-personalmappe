@@ -42,9 +42,13 @@ public class FintRepository {
     public <T> Mono<T> get(String orgId, Class<T> clazz, URI uri) {
         log.info("({}) fetching: {}", orgId, uri);
 
+        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
+
+        OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
+
         return webClient.get()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(getAuthorizedClient(orgId)))
+                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .retrieve()
                 .bodyToMono(clazz);
     }
@@ -60,46 +64,62 @@ public class FintRepository {
     }
 
     public <T> Mono<ResponseEntity<T>> getForEntity(String orgId, Class<T> clazz, URI uri) {
+        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
+
+        OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
+
         return webClient.get()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(getAuthorizedClient(orgId)))
+                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .retrieve()
                 .toEntity(clazz);
     }
 
     public <T> Mono<T> post(String orgId, Class<T> clazz, Object value, URI uri) {
+        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
+
+        OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
+
         return webClient.post()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(getAuthorizedClient(orgId)))
+                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .bodyValue(value)
                 .retrieve()
                 .bodyToMono(clazz);
     }
 
     public <T> Mono<ResponseEntity<Void>> postForEntity(String orgId, PersonalmappeResource personalmappeResource, URI uri) {
+        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
+
+        OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
+
         return webClient.post()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(getAuthorizedClient(orgId)))
+                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .bodyValue(personalmappeResource)
                 .retrieve()
                 .toBodilessEntity();
     }
 
     public <T> Mono<ResponseEntity<Void>> putForEntity(String orgId, Object bodyValue, URI uri) {
+        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
+
+        OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
+
         return webClient.put()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(getAuthorizedClient(orgId)))
+                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .bodyValue(bodyValue)
                 .retrieve()
                 .toBodilessEntity();
     }
 
-    private OAuth2AuthorizedClient getAuthorizedClient(String orgId) {
-        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(orgId)
+    private OAuth2AuthorizedClient getAuthorizedClient(OrganisationProperties.Organisation organisation) {
+        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(organisation.getRegistration())
                 .principal(principal)
                 .attributes(attrs -> {
-                    attrs.put(OAuth2ParameterNames.USERNAME, organisationProperties.getOrganisations().get(orgId).getUsername());
-                    attrs.put(OAuth2ParameterNames.PASSWORD, organisationProperties.getOrganisations().get(orgId).getPassword());
+                    attrs.put(OAuth2ParameterNames.USERNAME, organisation.getUsername());
+                    attrs.put(OAuth2ParameterNames.PASSWORD, organisation.getPassword());
                 }).build();
 
         return authorizedClientManager.authorize(authorizeRequest);

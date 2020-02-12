@@ -5,6 +5,7 @@ fint:
     graphql: https://api.felleskomponent.no/graphql/graphql
   organisations:
     viken:
+      registration: viken
       username:
       password:
       personalressurskategori:

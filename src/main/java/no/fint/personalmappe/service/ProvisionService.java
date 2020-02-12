@@ -134,7 +134,7 @@ public class ProvisionService {
                 .subscribe();
     }
 
-    private Predicate<GraphQLPersonalmappe.Arbeidsforhold> isActive(LocalDateTime now) {
+    public Predicate<GraphQLPersonalmappe.Arbeidsforhold> isActive(LocalDateTime now) {
         return arbeidsforhold -> {
             if (arbeidsforhold.getGyldighetsperiode() == null) return false;
 
@@ -147,12 +147,12 @@ public class ProvisionService {
         };
     }
 
-    private Predicate<GraphQLPersonalmappe.Arbeidsforhold> isHovedstilling() {
+    public Predicate<GraphQLPersonalmappe.Arbeidsforhold> isHovedstilling() {
         return arbeidsforhold -> Optional.ofNullable(arbeidsforhold.getHovedstilling())
                 .orElse(false);
     }
 
-    private Predicate<GraphQLPersonalmappe.Arbeidsforhold> hasPersonalressurskategori(String orgId) {
+    public Predicate<GraphQLPersonalmappe.Arbeidsforhold> hasPersonalressurskategori(String orgId) {
         return arbeidsforhold -> organisationProperties.getOrganisations().get(orgId).getPersonalressurskategori()
                 .contains(Optional.ofNullable(arbeidsforhold.getPersonalressurs())
                         .map(GraphQLPersonalmappe.Personalressurs::getPersonalressurskategori)
@@ -160,7 +160,7 @@ public class ProvisionService {
                         .orElse(null));
     }
 
-    private Predicate<PersonalmappeResource> hasMandatoryFieldsAndRelations() {
+    public Predicate<PersonalmappeResource> hasMandatoryFieldsAndRelations() {
         return personalmappeResource -> (!personalmappeResource.getPersonalressurs().isEmpty()
                 && !personalmappeResource.getPerson().isEmpty()
                 && !personalmappeResource.getArbeidssted().isEmpty()
