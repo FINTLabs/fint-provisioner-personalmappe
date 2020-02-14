@@ -47,7 +47,16 @@ public final class Util {
         return personalmappeResource.getPerson().stream()
                 .map(Link::getHref)
                 .map(href -> StringUtils.substringAfterLast(href, "/"))
+                .map(Util::maskId)
                 .findAny()
                 .orElse(null);
+    }
+
+    private static String maskId(String nin) {
+        try {
+            return Long.toString((Long.parseLong(nin) / 100), 36);
+        } catch (NumberFormatException e) {
+            return nin;
+        }
     }
 }
