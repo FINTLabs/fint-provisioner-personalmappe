@@ -1,42 +1,41 @@
 fint:
-  endpoints:
-    personalressurs: https://api.felleskomponent.no/administrasjon/personal/personalressurs
-    #personalmappe: https://alpha.felleskomponent.no/administrasjon/personal/personalmappe
-    personalmappe: http://localhost:8080/tjenester/personalmappe/post
-    graphql: https://api.felleskomponent.no/graphql/graphql
-  cron:
-    bulk: 0 0 0 * * MON-FRI
-    delta: 0 */5 8-16 * * MON-FRI
-  organisations:
-    viken-no:
-      registration: viken
-      username:
-      password:
-      personalressurskategori:
-        - F
-        - M
-      bulk-limit: 5
-      bulk: false
-      delta: true
-
+    endpoints:
+        personalressurs: https://api.felleskomponent.no/administrasjon/personal/personalressurs
+        #personalmappe: https://alpha.felleskomponent.no/administrasjon/personal/personalmappe
+        personalmappe: http://localhost:8080/tjenester/personalmappe/post
+        graphql: https://api.felleskomponent.no/graphql/graphql
+    cron:
+        bulk: 0 0 0 * * MON-FRI
+        delta: 0 */5 8-16 * * MON-FRI
+    organisations:
+        viken-no:
+            registration: viken
+            username: null
+            password: null
+            personalressurskategori:
+            - F
+            - M
+            bulk-limit: 5
+            bulk: false
+            delta: true
 spring:
-  security:
-    oauth2:
-      client:
-        registration:
-          viken-no:
-            client-id:
-            client-secret:
-            authorization-grant-type: password
-            scope: fint-client
-            provider: fint
-        provider:
-          fint:
-            token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
-  data:
-    mongodb:
-      uri:
-
+    security:
+        oauth2:
+            client:
+                registration:
+                    viken-no:
+                        client-id: null
+                        client-secret: null
+                        authorization-grant-type: password
+                        scope: fint-client
+                        provider: fint
+                provider:
+                    fint:
+                        token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
+    data:
+        mongodb:
+            uri: null
 server:
-  servlet:
-    context-path: /tjenester/personalmappe
+    servlet:
+        context-path: /tjenester/personalmappe
+
