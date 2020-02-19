@@ -15,7 +15,12 @@ public class OrganisationProperties {
 
     @Data
     public static class Organisation {
-        private String username, password, registration;
+        private String username;
+        private String password;
+        private String registration;
+        private int bulkLimit;
+        private boolean bulk;
+        private boolean delta;
         private List<String> personalressurskategori;
     }
 }

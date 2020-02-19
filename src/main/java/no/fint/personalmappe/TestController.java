@@ -1,9 +1,12 @@
 package no.fint.personalmappe;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
+import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
 import no.fint.personalmappe.service.ProvisionService;
 import no.fint.personalmappe.util.Util;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,16 +20,24 @@ public class TestController {
 
     private final ProvisionService provisionService;
     private final MongoDBRepository mongoDBRepository;
+    private final FintRepository fintRepository;
 
-    public TestController(ProvisionService provisionService, MongoDBRepository mongoDBRepository) {
+    @Value("${fint.endpoints.personalressurs}")
+    private URI personalressursEndpoint;
+
+    public TestController(ProvisionService provisionService, MongoDBRepository mongoDBRepository, FintRepository fintRepository) {
         this.provisionService = provisionService;
         this.mongoDBRepository = mongoDBRepository;
+        this.fintRepository = fintRepository;
     }
 
     @GetMapping("/{orgId}/provision/{limit}")
     public void getPersonalmappeResource(@PathVariable String orgId, @PathVariable int limit) {
-        ProvisionService.setLIMIT(limit);
-        provisionService.bulk();
+        provisionService.provisionByOrgId(
+                orgId,
+                limit,
+                fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint)
+        );
     }
 
     @GetMapping("/{orgId}/get/{username}")

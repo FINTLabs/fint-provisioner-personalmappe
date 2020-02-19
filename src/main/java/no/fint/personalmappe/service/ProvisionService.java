@@ -2,8 +2,6 @@ package no.fint.personalmappe.service;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.NonNull;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
@@ -21,11 +19,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -49,9 +48,6 @@ public class ProvisionService {
     private final ResponseHandlerService responseHandlerService;
     private final OrganisationProperties organisationProperties;
 
-    @Setter
-    private static int LIMIT = 20;
-
     private final GraphQLQuery graphQLQuery = Util.getGraphQLQuery("personalressurs.graphql");
 
     public ProvisionService(FintRepository fintRepository, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, ResponseHandlerService responseHandlerService) {
@@ -61,34 +57,60 @@ public class ProvisionService {
         this.responseHandlerService = responseHandlerService;
     }
 
+    @Scheduled(cron = "${fint.cron.bulk}")
     public void bulk() {
         organisationProperties.getOrganisations().keySet()
                 .forEach(orgId -> {
-                    List<String> usernames = fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint)
-                            .flatMapIterable(PersonalressursResources::getContent)
-                            .collectList()
-                            .blockOptional()
-                            .orElse(Collections.emptyList())
-                            .stream()
-                            .sorted(Comparator.comparing(resource -> Optional.ofNullable(resource.getBrukernavn())
-                                    .map(Identifikator::getIdentifikatorverdi)
-                                    .filter(StringUtils::isAlpha)
-                                    .orElse("ZZZ")))
-                            .map(PersonalressursResource::getBrukernavn)
-                            .filter(Objects::nonNull)
-                            .map(Identifikator::getIdentifikatorverdi)
-                            .distinct()
-                            .collect(Collectors.toList());
-
-                    usernames.subList(0, LIMIT).stream()
-                            .map(username -> getPersonalmappeResource(orgId, username))
-                            .filter(Objects::nonNull)
-                            .forEach(personalmappeResourceWithUsername ->
-                                    provision(orgId, personalmappeResourceWithUsername.getUsername(),
-                                            personalmappeResourceWithUsername.personalmappeResource));
-
-                    fintRepository.getSinceTimestampMap().put(orgId, Instant.now().toEpochMilli());
+                    OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
+                    if (props.isBulk()) {
+                        log.trace("Bulking personalmapper for {}", orgId);
+                        provisionByOrgId(orgId, props.getBulkLimit(), fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint));
+                    }
+                    else {
+                        log.trace("Bulk is disabled for {}", orgId);
+                    }
                 });
+    }
+
+    @Scheduled(cron = "${fint.cron.delta}")
+    public void delta() {
+        organisationProperties.getOrganisations().keySet()
+                .forEach(orgId -> {
+                    OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
+                    if (props.isDelta()) {
+                        log.trace("Delta personalmapper for {}", orgId);
+                        provisionByOrgId(orgId, 0, fintRepository.getUpdates(orgId, PersonalressursResources.class, personalressursEndpoint));
+                    }
+                    else {
+                        log.trace("Delta is disabled for {}", orgId);
+                    }
+                });
+    }
+
+    public void provisionByOrgId(String orgId, int limit, Mono<PersonalressursResources> personalressursResources) {
+        List<String> usernames = personalressursResources
+                .flatMapIterable(PersonalressursResources::getContent)
+                .collectList()
+                .blockOptional()
+                .orElse(Collections.emptyList())
+                .stream()
+                .sorted(Comparator.comparing(resource -> Optional.ofNullable(resource.getBrukernavn())
+                        .map(Identifikator::getIdentifikatorverdi)
+                        .filter(StringUtils::isAlpha)
+                        .orElse("ZZZ")))
+                .map(PersonalressursResource::getBrukernavn)
+                .filter(Objects::nonNull)
+                .map(Identifikator::getIdentifikatorverdi)
+                .distinct()
+                .collect(Collectors.toList());
+
+        usernames.stream()
+                .limit(limit == 0 ? usernames.size() : limit)
+                .map(username -> getPersonalmappeResource(orgId, username))
+                .filter(Objects::nonNull)
+                .forEach(personalmappeResourceWithUsername ->
+                        provision(orgId, personalmappeResourceWithUsername.getUsername(),
+                                personalmappeResourceWithUsername.personalmappeResource));
     }
 
     public PersonalmappeResourceWithUsername getPersonalmappeResource(String orgId, String username) {

@@ -30,7 +30,7 @@ public class FintRepository {
     private final Authentication principal;
 
     @Getter
-    private final Map<String, Long> sinceTimestampMap = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, Long> sinceTimestamp = Collections.synchronizedMap(new HashMap<>());
 
     public FintRepository(WebClient webClient, OAuth2AuthorizedClientManager authorizedClientManager, OrganisationProperties organisationProperties, Authentication principal) {
         this.webClient = webClient;
@@ -46,19 +46,23 @@ public class FintRepository {
 
         OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
 
-        return webClient.get()
+        Mono<T> resources = webClient.get()
                 .uri(uri)
                 .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .retrieve()
                 .bodyToMono(clazz);
+
+        sinceTimestamp.put(orgId, Instant.now().toEpochMilli());
+
+        return resources;
     }
 
     public <T> Mono<T> getUpdates(String orgId, Class<T> clazz, URI uri) {
-        Long since = sinceTimestampMap.getOrDefault(orgId, 0L);
+        Long since = sinceTimestamp.getOrDefault(orgId, 0L);
 
         Mono<T> resources = get(orgId, clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
 
-        sinceTimestampMap.put(orgId, Instant.now().toEpochMilli());
+        sinceTimestamp.put(orgId, Instant.now().toEpochMilli());
 
         return resources;
     }
