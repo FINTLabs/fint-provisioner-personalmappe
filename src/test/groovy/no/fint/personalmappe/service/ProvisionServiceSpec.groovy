@@ -4,12 +4,9 @@ import no.fint.model.felles.kompleksedatatyper.Personnavn
 import no.fint.model.resource.Link
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
 import no.fint.personalmappe.model.GraphQLPersonalmappe
-import no.fint.personalmappe.model.MongoDBPersonalmappe
 import no.fint.personalmappe.properties.OrganisationProperties
 import no.fint.personalmappe.repository.FintRepository
 import no.fint.personalmappe.repository.MongoDBRepository
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
@@ -34,7 +31,7 @@ class ProvisionServiceSpec extends Specification {
 
     def "getPersonalmappeResources() returns list of personalmappeResource"() {
         when:
-        def resources = provisionService.getPersonalmappeResources(_ as String, _ as String)
+        def resources = provisionService.getPersonalmappeResource(_ as String, _ as String)
 
         then:
         1 * fintRepository.post(_ as String, GraphQLPersonalmappe.class, _, _) >> Mono.just(getGraphQLPersonalmappe())

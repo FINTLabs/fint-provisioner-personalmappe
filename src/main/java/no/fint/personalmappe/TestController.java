@@ -1,7 +1,6 @@
 package no.fint.personalmappe;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.repository.MongoDBRepository;
 import no.fint.personalmappe.service.ProvisionService;
 import no.fint.personalmappe.util.Util;
@@ -10,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -28,30 +26,31 @@ public class TestController {
     @GetMapping("/{orgId}/provision/{limit}")
     public void getPersonalmappeResource(@PathVariable String orgId, @PathVariable int limit) {
         ProvisionService.setLIMIT(limit);
-        provisionService.full();
+        provisionService.bulk();
     }
 
     @GetMapping("/{orgId}/get/{username}")
-    public List<PersonalmappeResource> getPersonalmappeResource(@PathVariable String orgId, @PathVariable String username) {
-        return provisionService.getPersonalmappeResources(orgId, username);
+    public ProvisionService.PersonalmappeResourceWithUsername getPersonalmappeResource(@PathVariable String orgId, @PathVariable String username) {
+        return provisionService.getPersonalmappeResource(orgId, username);
     }
 
     @PostMapping("/{orgId}/post/{username}")
     public ResponseEntity<?> postPersonalmappeResource(@PathVariable String orgId, @PathVariable String username) throws InterruptedException {
-        List<PersonalmappeResource> personalmappeResources = getPersonalmappeResource(orgId, username);
+        ProvisionService.PersonalmappeResourceWithUsername personalmappeResource = getPersonalmappeResource(orgId, username);
 
-        if (personalmappeResources.size() == 1) {
-            provisionService.provision(orgId, personalmappeResources.get(0));
-            TimeUnit.SECONDS.sleep(1);
-
-            return mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResources.get(0)))
-                    .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
-                    .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
+        if (personalmappeResource == null) {
+            return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.notFound().build();
+        provisionService.provision(orgId, username, personalmappeResource.getPersonalmappeResource());
+        TimeUnit.SECONDS.sleep(1);
+
+        return mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResource.getPersonalmappeResource()))
+                .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
+                .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
     }
 
+    /*
     @PutMapping("/{orgId}/put")
     public ResponseEntity<?> putPersonalmappeResource(@PathVariable String orgId, @RequestBody PersonalmappeResource personalmappeResource) throws InterruptedException {
         mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResource))
@@ -63,6 +62,8 @@ public class TestController {
                 .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
                 .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
     }
+
+     */
 
     @PostMapping("/post")
     public ResponseEntity<?> dummyPost() {

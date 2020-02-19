@@ -28,19 +28,21 @@ public class ResponseHandlerService {
         this.mongoDBRepository = mongoDBRepository;
     }
 
-    public void handleStatus(String orgId, String id, ResponseEntity<Void> status) {
+    public void handleStatus(String orgId, String id, String username, ResponseEntity<Void> status) {
         mongoDBRepository.save(MongoDBPersonalmappe.builder()
                 .id(id)
+                .username(username)
                 .orgId(orgId)
                 .status(HttpStatus.ACCEPTED)
                 .association(status.getHeaders().getLocation())
                 .build());
     }
 
-    public void handleResource(ResponseEntity<Object> getForResource, String orgId, String id) {
+    public void handleResource(ResponseEntity<Object> getForResource, String orgId, String id, String username) {
         if (getForResource.getStatusCode().is3xxRedirection()) {
             mongoDBRepository.save(MongoDBPersonalmappe.builder()
                     .id(id)
+                    .username(username)
                     .orgId(orgId)
                     .status(HttpStatus.CREATED)
                     .association(getForResource.getHeaders().getLocation())
@@ -50,7 +52,7 @@ public class ResponseHandlerService {
         }
     }
 
-    public void handleError(WebClientResponseException response, String orgId, String id) {
+    public void handleError(WebClientResponseException response, String orgId, String id, String username) {
         switch (response.getStatusCode()) {
             case CONFLICT:
                 PersonalmappeResources personalmappeResources = new PersonalmappeResources();
@@ -63,6 +65,7 @@ public class ResponseHandlerService {
                 if (personalmappeResources.getTotalItems() == 1) {
                     mongoDBRepository.save(MongoDBPersonalmappe.builder()
                             .id(id)
+                            .username(username)
                             .orgId(orgId)
                             .association(getSelfLink(personalmappeResources.getContent().get(0)))
                             .status(HttpStatus.CREATED)
@@ -70,6 +73,7 @@ public class ResponseHandlerService {
                 } else {
                     mongoDBRepository.save(MongoDBPersonalmappe.builder()
                             .id(id)
+                            .username(username)
                             .orgId(orgId)
                             .status(HttpStatus.CONFLICT)
                             .message("More than one personalmappe in conflict")
@@ -79,6 +83,7 @@ public class ResponseHandlerService {
             case BAD_REQUEST:
                 mongoDBRepository.save(MongoDBPersonalmappe.builder()
                         .id(id)
+                        .username(username)
                         .orgId(orgId)
                         .status(HttpStatus.BAD_REQUEST)
                         .message(response.getResponseBodyAsString())
@@ -87,6 +92,7 @@ public class ResponseHandlerService {
             case INTERNAL_SERVER_ERROR:
                 mongoDBRepository.save(MongoDBPersonalmappe.builder()
                         .id(id)
+                        .username(username)
                         .orgId(orgId)
                         .status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .message(response.getResponseBodyAsString())
@@ -95,6 +101,7 @@ public class ResponseHandlerService {
             case GONE:
                 mongoDBRepository.save(MongoDBPersonalmappe.builder()
                         .id(id)
+                        .username(username)
                         .orgId(orgId)
                         .status(HttpStatus.GONE)
                         .build());

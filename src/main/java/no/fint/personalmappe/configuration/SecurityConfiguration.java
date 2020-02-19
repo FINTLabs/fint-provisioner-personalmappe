@@ -3,6 +3,8 @@ package no.fint.personalmappe.configuration;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ClientHttpConnector;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -13,6 +15,10 @@ import org.springframework.security.oauth2.client.web.reactive.function.client.S
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.Connection;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
+import reactor.netty.tcp.TcpClient;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -68,7 +74,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public WebClient webClient(WebClient.Builder builder, OAuth2AuthorizedClientManager authorizedClientManager) {
+    public ClientHttpConnector clientHttpConnector() {
+        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
+    }
+
+    @Bean
+    public WebClient webClient(WebClient.Builder builder, OAuth2AuthorizedClientManager authorizedClientManager, ClientHttpConnector clientHttpConnector) {
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(-1))
                 .build();
@@ -77,6 +88,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
 
         return builder
+                .clientConnector(clientHttpConnector)
                 .exchangeStrategies(exchangeStrategies)
                 .filter(authorizedClientExchangeFilterFunction)
                 .build();
