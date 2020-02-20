@@ -1,6 +1,5 @@
 package no.fint.personalmappe.configuration;
 
-import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ClientHttpConnector;
@@ -26,16 +25,12 @@ import java.util.function.Function;
 @Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    /*
-    TODO - configure - change from permitAll to something more restrictive or remove all together in production,
-     if no need for TestController
-     */
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeRequests()
-                .requestMatchers(EndpointRequest.to("health")).permitAll()
+                // .requestMatchers(EndpointRequest.to("health")).permitAll()
                 .anyRequest()
                 .permitAll();
     }
