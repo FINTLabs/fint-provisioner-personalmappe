@@ -18,8 +18,8 @@ The main features are:
 - Sets the case status to a configured value when the employeer leaves.
 - If `administraiv enhet` or `saksbehandler` does not exist in the archive system the 
 case is put on a configured `administraiv enhet` and `saksbehandler`.
-- On a configured time there is a full syncronization of `personalmapper` once a day. Default is at midnight.
-- On configured intervals there is incremental updated of `personalmapper`. Default is once an hour.
+- On a configured time there is a full syncronization of `personalmapper` once a day. [Default](#configuration) is at midnight.
+- On configured intervals there is incremental updated of `personalmapper`. [Default](#configuration) is once an hour.
 
 ## Overall flow
 ![flyt-overordnet](diagrams/flyt-overordnet-light.png)
@@ -43,22 +43,23 @@ case is put on a configured `administraiv enhet` and `saksbehandler`.
 
 | Key                                                                           | Description | Default value                                                          |
 | ----------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------- |
-| fint.endpoints.personalressurs                                                |             | https://api.felleskomponent.no/administrasjon/personal/personalressurs |
-| fint.endpoints.personalmappe                                                  |             | https://alpha.felleskomponent.no/administrasjon/personal/personalmappe |
-| fint.endpoints.graphql                                                        |             | https://api.felleskomponent.no/graphql/graphql                         |
-| fint.cron.bulk                                                                |             | `0 0 0 * * MON-FRI`                                                      |
-| fint.cron.bulk.delta                                                          |             | `0 */5 8-16 * * MON-FRI`                                                 |
-| fint.organisations.`<orgId>`.registration                                     |             |                                                                        |
-| fint.organisations.`<orgId>`.username                                         |             |                                                                        |
-| fint.organisations.`<orgId>`.password                                         |             |                                                                        |
-| fint.organisations.`<orgId>`.bulk-limit                                       |             | `5`                                                                      |
-| fint.organisations.`orgId>`.bulk                                              |             | `false`                                                                  |
-| fint.organisations.`<orgId>`.delta                                            |             | `true`                                                                   |
-| spring.security.oauth2.client.registration.`<orgId>`.client-id                |             |                                                                        |
-| spring.security.oauth2.client.registration.`<orgId>`.client-secret            |             |                                                                        |
-| spring.security.oauth2.client.registration.`<orgId>`.authorization-grant-type |             | `password`                                                               |
-| spring.security.oauth2.client.registration.`<orgId>`.scope                    |             | `fint-client`                                                           |
-| spring.security.oauth2.client.registration.`<orgId>`.provider                 |             | `fint`                                                                   |
-| spring.security.oauth2.client.provider.fint.token-uri                         |             | https://idp.felleskomponent.no/nidp/oauth/nam/token                    |
-| spring.security.data.mongodb.uri                                              |             |                                                                        |
-| server.servlet.context-path                                                   |             | `/tjenester/personalmappe`                                               |
+| fint.endpoints.personalressurs                                                | `Personalressurs` endpoint.            | https://api.felleskomponent.no/administrasjon/personal/personalressurs |
+| fint.endpoints.personalmappe                                                  | `Personalmappe` endpoint.            | https://alpha.felleskomponent.no/administrasjon/personal/personalmappe |
+| fint.endpoints.graphql                                                        | `GraphQL` endpoint.            | https://api.felleskomponent.no/graphql/graphql                         |
+| fint.cron.bulk                                                                | Cron expression for full synchronisation            | `0 0 0 * * MON-FRI`                                                      |
+| fint.cron.bulk.delta                                                          | Cron expression for delta synchronisation             | `0 */5 8-16 * * MON-FRI`                                                 |
+| fint.organisations.`<orgId>`.registration                                     | Should be the same as `<orgId>`. I.e. `viken-no`            |                                                                        |
+| fint.organisations.`<orgId>`.username                                         | `username` for API user from the customer portal.            |                                                                        |
+| fint.organisations.`<orgId>`.password                                         | `password` for API user from the customer portal.            |                                                                        |
+| fint.organisations.`<orgId>`.personalressurskategori                                         | List of `personalressurskategorier` that will be provisioned.          |                                                                        |
+| fint.organisations.`<orgId>`.bulk-limit                                       | This is the number of `personalressurser` to synchronise on a load. If set to `0` all will be synchronised. Setting it to another value is meant for initial testing.            | `5`                                                                      |
+| fint.organisations.`orgId>`.bulk                                              | `true` or `false`. If `true` bulk synchronisation is enabled.            | `false`                                                                  |
+| fint.organisations.`<orgId>`.delta                                            | `true` or `false`. If `true` delta synchronisation is enabled.            | `true`                                                                   |
+| spring.security.oauth2.client.registration.`<orgId>`.client-id                | `client-id` for API user from the customer portal.             |                                                                        |
+| spring.security.oauth2.client.registration.`<orgId>`.client-secret            | `client-secret` for API user from the customer portal.             |                                                                        |
+| spring.security.oauth2.client.registration.`<orgId>`.authorization-grant-type | OAuth grant type. Should not be changed. Changing this will cause authentication not to work.            | `password`                                                               |
+| spring.security.oauth2.client.registration.`<orgId>`.scope                    | OAuth scope.            | `fint-client`                                                           |
+| spring.security.oauth2.client.registration.`<orgId>`.provider                 | Should not be changed.            | `fint`                                                                   |
+| spring.security.oauth2.client.provider.fint.token-uri                         | Token uri for the IDP.            | https://idp.felleskomponent.no/nidp/oauth/nam/token                    |
+| spring.security.data.mongodb.uri                                              | URI for the Mongo database.            |                                                                        |
+| server.servlet.context-path                                                   | Base url for the service.            | `/tjenester/personalmappe`                                               |
