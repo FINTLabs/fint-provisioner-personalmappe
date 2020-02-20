@@ -1,5 +1,14 @@
 # FINT Provisioner Personalmappe
 
+![flyt-overordnet](diagrams/flyt-overordnet-light.png)
+
+## Provisioning Service flow
+![flyt-provisioning-service-create](diagrams/flyt-provisjoneringstjeneste-create.png)
+![flyt-provisioning-service-update](diagrams/flyt-provisjoneringstjeneste-update.png)
+
+## Adapter flow
+![flow-adapter-create](diagrams/flyt-adapter-create.png)
+![flow-adapter-update](diagrams/flyt-adapter-update.png)
 
 # Configuration
 > `orgId` should be replaced by the organisations orgId and the `.` should be replaced with a dash `-`. I.e. `viken.no` should be `viken-no`.
