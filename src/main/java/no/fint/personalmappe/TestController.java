@@ -5,7 +5,7 @@ import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
 import no.fint.personalmappe.service.ProvisionService;
-import no.fint.personalmappe.util.Util;
+import no.fint.personalmappe.utilities.NINUtilities;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,12 +40,12 @@ public class TestController {
         );
     }
 
-    @GetMapping("/{orgId}/get/{username}")
+    @GetMapping("/{orgId}/{username}")
     public ProvisionService.PersonalmappeResourceWithUsername getPersonalmappeResource(@PathVariable String orgId, @PathVariable String username) {
         return provisionService.getPersonalmappeResource(orgId, username);
     }
 
-    @PostMapping("/{orgId}/post/{username}")
+    @PostMapping("/{orgId}/{username}")
     public ResponseEntity<?> postPersonalmappeResource(@PathVariable String orgId, @PathVariable String username) throws InterruptedException {
         ProvisionService.PersonalmappeResourceWithUsername personalmappeResource = getPersonalmappeResource(orgId, username);
 
@@ -56,25 +56,10 @@ public class TestController {
         provisionService.provision(orgId, username, personalmappeResource.getPersonalmappeResource());
         TimeUnit.SECONDS.sleep(1);
 
-        return mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResource.getPersonalmappeResource()))
+        return mongoDBRepository.findById(orgId + "_" + NINUtilities.getNIN(personalmappeResource.getPersonalmappeResource()))
                 .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
                 .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
     }
-
-    /*
-    @PutMapping("/{orgId}/put")
-    public ResponseEntity<?> putPersonalmappeResource(@PathVariable String orgId, @RequestBody PersonalmappeResource personalmappeResource) throws InterruptedException {
-        mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResource))
-                .ifPresent(mongoDBPersonalmappe ->
-                        provisionService.provision(orgId, personalmappeResource));
-        TimeUnit.SECONDS.sleep(1);
-
-        return mongoDBRepository.findById(orgId + "_" + Util.getNIN(personalmappeResource))
-                .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
-                .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
-    }
-
-     */
 
     @PostMapping("/post")
     public ResponseEntity<?> dummyPost() {

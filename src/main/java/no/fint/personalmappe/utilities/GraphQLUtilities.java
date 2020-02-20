@@ -1,9 +1,6 @@
-package no.fint.personalmappe.util;
+package no.fint.personalmappe.utilities;
 
-import no.fint.model.resource.Link;
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.model.GraphQLQuery;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,15 +8,15 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public final class Util {
+public final class GraphQLUtilities {
 
-    private Util() {
+    private GraphQLUtilities() {
     }
 
     public static GraphQLQuery getGraphQLQuery(String filename) {
         String query = null;
 
-        try (InputStream inputStream = Util.class.getClassLoader().getResourceAsStream(filename)) {
+        try (InputStream inputStream = GraphQLUtilities.class.getClassLoader().getResourceAsStream(filename)) {
             query = graphQLToStringConverter(Objects.requireNonNull(inputStream));
         } catch (IOException | NullPointerException ex) {
             ex.printStackTrace();
@@ -43,20 +40,4 @@ public final class Util {
         return new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
     }
 
-    public static String getNIN(PersonalmappeResource personalmappeResource) {
-        return personalmappeResource.getPerson().stream()
-                .map(Link::getHref)
-                .map(href -> StringUtils.substringAfterLast(href, "/"))
-                .map(Util::maskId)
-                .findAny()
-                .orElse(null);
-    }
-
-    private static String maskId(String nin) {
-        try {
-            return Long.toString((Long.parseLong(nin) / 100), 36);
-        } catch (NumberFormatException e) {
-            return nin;
-        }
-    }
 }

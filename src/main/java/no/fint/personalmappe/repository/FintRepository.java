@@ -40,7 +40,7 @@ public class FintRepository {
     }
 
     public <T> Mono<T> get(String orgId, Class<T> clazz, URI uri) {
-        log.info("({}) fetching: {}", orgId, uri);
+        log.trace("({}) fetching: {}", orgId, uri);
 
         OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
 
