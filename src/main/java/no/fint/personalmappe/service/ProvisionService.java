@@ -14,7 +14,8 @@ import no.fint.personalmappe.model.MongoDBPersonalmappe;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
-import no.fint.personalmappe.util.Util;
+import no.fint.personalmappe.utilities.GraphQLUtilities;
+import no.fint.personalmappe.utilities.NINUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -48,7 +49,7 @@ public class ProvisionService {
     private final ResponseHandlerService responseHandlerService;
     private final OrganisationProperties organisationProperties;
 
-    private final GraphQLQuery graphQLQuery = Util.getGraphQLQuery("personalressurs.graphql");
+    private final GraphQLQuery graphQLQuery = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
 
     public ProvisionService(FintRepository fintRepository, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, ResponseHandlerService responseHandlerService) {
         this.fintRepository = fintRepository;
@@ -129,7 +130,7 @@ public class ProvisionService {
                         .filter(hasMandatoryFieldsAndRelations())
                         .collect(Collectors.toList());
 
-        log.info("{} {}", username, personalmappeResources.size());
+        log.trace("{} {}", username, personalmappeResources.size());
 
         return (personalmappeResources.size() == 1 ?
                 PersonalmappeResourceWithUsername.builder()
@@ -146,7 +147,7 @@ public class ProvisionService {
     }
 
     public void provision(String orgId, String username, PersonalmappeResource personalmappeResource) {
-        String id = orgId + "_" + Util.getNIN(personalmappeResource);
+        String id = orgId + "_" + NINUtilities.getNIN(personalmappeResource);
 
         Optional<MongoDBPersonalmappe> mongoDBPersonalmappe = mongoDBRepository.findById(id);
 

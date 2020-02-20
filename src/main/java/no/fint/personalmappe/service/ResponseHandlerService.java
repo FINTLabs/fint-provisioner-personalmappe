@@ -9,6 +9,7 @@ import no.fint.model.resource.administrasjon.personal.PersonalmappeResources;
 import no.fint.personalmappe.exception.FinalStatusPendingException;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
 import no.fint.personalmappe.repository.MongoDBRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,12 @@ import java.time.Duration;
 @Slf4j
 @Service
 public class ResponseHandlerService {
+
+    @Value("${fint.status-pending.fixed-backoff:5}")
+    private long fixedBackoff;
+
+    @Value("${fint.status-pending.max-retry:2}")
+    private long maxReties;
 
     private final MongoDBRepository mongoDBRepository;
 
@@ -112,12 +119,9 @@ public class ResponseHandlerService {
         }
     }
 
-    /*
-    TODO - set reasonable values
-     */
     public final Retry<?> finalStatusPending = Retry.anyOf(FinalStatusPendingException.class)
-            .fixedBackoff(Duration.ofSeconds(5))
-            .retryMax(2)
+            .fixedBackoff(Duration.ofSeconds(fixedBackoff))
+            .retryMax(maxReties)
             .doOnRetry(exception -> log.info("{}", exception));
 
     private URI getSelfLink(PersonalmappeResource personalmappeResource) {

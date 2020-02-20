@@ -9,14 +9,14 @@ fint:
         delta: 0 */5 8-16 * * MON-FRI
     organisations:
         viken-no:
-            registration: viken
-            username: null
-            password: null
+            registration: viken-no
+            username: 
+            password:
             personalressurskategori:
             - F
             - M
             bulk-limit: 5
-            bulk: false
+            bulk: true
             delta: true
 spring:
     security:
@@ -24,8 +24,8 @@ spring:
             client:
                 registration:
                     viken-no:
-                        client-id: null
-                        client-secret: null
+                        client-id:
+                        client-secret:
                         authorization-grant-type: password
                         scope: fint-client
                         provider: fint
@@ -34,7 +34,7 @@ spring:
                         token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
     data:
         mongodb:
-            uri: null
+            uri:
 server:
     servlet:
         context-path: /tjenester/personalmappe
