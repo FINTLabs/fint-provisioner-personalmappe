@@ -38,7 +38,7 @@ class ProvisionServiceSpec extends Specification {
         1 * organisationProperties.getOrganisations() >> [(_ as String): new OrganisationProperties.Organisation(
                 username: _ as String, password: _ as String, registration: _ as String, personalressurskategori: ['F'])]
 
-        resources.size() == 1
+        resources
     }
 
     def "isActive() returns true when now is within gyldighetsperiode"() {
