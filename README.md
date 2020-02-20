@@ -1,13 +1,29 @@
-# FINT Provisioner Personalmappe
+# FINT Personalmappe Provisioning Service
 
+This service provisions employee files in the archive system using FINT Core APIs.
+
+The main features are:
+- Create `personalmappe` for new employees or if it's not existing.
+- Change `administrative enhet` and `saksbehandler` (leder) when it changes.
+- Sets the case status to a configured value when the employeer leaves.
+- If `administraiv enhet` or `saksbehandler` does not exist in the archive system the 
+case is put on a configured `administraiv enhet` and `saksbehandler`.
+
+## Overall flow
 ![flyt-overordnet](diagrams/flyt-overordnet-light.png)
 
 ## Provisioning Service flow
+### On create
 ![flyt-provisioning-service-create](diagrams/flyt-provisjoneringstjeneste-create.png)
+
+### On update
 ![flyt-provisioning-service-update](diagrams/flyt-provisjoneringstjeneste-update.png)
 
 ## Adapter flow
+### On create
 ![flow-adapter-create](diagrams/flyt-adapter-create.png)
+
+### On update
 ![flow-adapter-update](diagrams/flyt-adapter-update.png)
 
 # Configuration
