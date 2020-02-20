@@ -1,5 +1,15 @@
 # FINT Personalmappe Provisioning Service
 
+- [FINT Personalmappe Provisioning Service](#fint-personalmappe-provisioning-service)
+  - [Overall flow](#overall-flow)
+  - [Provisioning Service flow](#provisioning-service-flow)
+    - [On create](#on-create)
+    - [On update](#on-update)
+  - [Adapter flow](#adapter-flow)
+    - [On create](#on-create-1)
+    - [On update](#on-update-1)
+- [Configuration](#configuration)
+
 This service provisions employee files in the archive system using FINT Core APIs.
 
 The main features are:
@@ -8,6 +18,8 @@ The main features are:
 - Sets the case status to a configured value when the employeer leaves.
 - If `administraiv enhet` or `saksbehandler` does not exist in the archive system the 
 case is put on a configured `administraiv enhet` and `saksbehandler`.
+- On a configured time there is a full syncronization of `personalmapper` once a day. Default is at midnight.
+- On configured intervals there is incremental updated of `personalmapper`. Default is once an hour.
 
 ## Overall flow
 ![flyt-overordnet](diagrams/flyt-overordnet-light.png)
@@ -29,24 +41,24 @@ case is put on a configured `administraiv enhet` and `saksbehandler`.
 # Configuration
 > `orgId` should be replaced by the organisations orgId and the `.` should be replaced with a dash `-`. I.e. `viken.no` should be `viken-no`.
 
-| Key                                                                                                                | Description | Default value                                                          |
-| ------------------------------------------------------------------------------------------------------------------ | ----------- | ---------------------------------------------------------------------- |
-| fint.endpoints.personalressurs                                                                                     |             | https://api.felleskomponent.no/administrasjon/personal/personalressurs |
-| fint.endpoints.personalmappe                                                                                       |             | https://alpha.felleskomponent.no/administrasjon/personal/personalmappe |
-| fint.endpoints.graphql                                                                                             |             | https://api.felleskomponent.no/graphql/graphql                         |
-| fint.cron.bulk                                                                                           |             | 0 0 0 * * MON-FRI                                                      |
-| fint.cron.bulk.delta                                                                                     |             | 0 */5 8-16 * * MON-FRI                                                 |
-| fint.organisations.`<orgId>`.registration                                                                  |             |                                                                        |
-| fint.organisations.`<orgId>`.username                                                         |             |                                                                        |
-| fint.organisations.`<orgId>`.password                                                |             |                                                                        |
-| fint.organisations.`<orgId>`.bulk-limit                                              |             | 5                                                                      |
-| fint.organisations.`orgId>`.bulk                                                    |             | false                                                                  |
-| fint.organisations.`<orgId>`.delta                                                   |             | true                                                                   |
-| spring.security.oauth2.client.registration.`<orgId>`.client-id                                                       |             |                                                                        |
-| spring.security.oauth2.client.registration.`<orgId>`.client-secret                                         |             |                                                                        |
-| spring.security.oauth2.client.registration.`<orgId>`.authorization-grant-type                |             | password                                                               |
-| spring.security.oauth2.client.registration.`<orgId>`.scope          |             | fint-client                                                            |
-| spring.security.oauth2.client.registration.`<orgId>`.provider |             | fint                                                                   |
-| spring.security.oauth2.client.provider.fint.token-uri                 |             | https://idp.felleskomponent.no/nidp/oauth/nam/token                    |
-| spring.security.data.mongodb.uri                                                                                   |             |                                                                        |
-| server.servlet.context-path                                                                                        |             | /tjenester/personalmappe                                               |
+| Key                                                                           | Description | Default value                                                          |
+| ----------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| fint.endpoints.personalressurs                                                |             | https://api.felleskomponent.no/administrasjon/personal/personalressurs |
+| fint.endpoints.personalmappe                                                  |             | https://alpha.felleskomponent.no/administrasjon/personal/personalmappe |
+| fint.endpoints.graphql                                                        |             | https://api.felleskomponent.no/graphql/graphql                         |
+| fint.cron.bulk                                                                |             | `0 0 0 * * MON-FRI`                                                      |
+| fint.cron.bulk.delta                                                          |             | `0 */5 8-16 * * MON-FRI`                                                 |
+| fint.organisations.`<orgId>`.registration                                     |             |                                                                        |
+| fint.organisations.`<orgId>`.username                                         |             |                                                                        |
+| fint.organisations.`<orgId>`.password                                         |             |                                                                        |
+| fint.organisations.`<orgId>`.bulk-limit                                       |             | `5`                                                                      |
+| fint.organisations.`orgId>`.bulk                                              |             | `false`                                                                  |
+| fint.organisations.`<orgId>`.delta                                            |             | `true`                                                                   |
+| spring.security.oauth2.client.registration.`<orgId>`.client-id                |             |                                                                        |
+| spring.security.oauth2.client.registration.`<orgId>`.client-secret            |             |                                                                        |
+| spring.security.oauth2.client.registration.`<orgId>`.authorization-grant-type |             | `password`                                                               |
+| spring.security.oauth2.client.registration.`<orgId>`.scope                    |             | `fint-client`                                                           |
+| spring.security.oauth2.client.registration.`<orgId>`.provider                 |             | `fint`                                                                   |
+| spring.security.oauth2.client.provider.fint.token-uri                         |             | https://idp.felleskomponent.no/nidp/oauth/nam/token                    |
+| spring.security.data.mongodb.uri                                              |             |                                                                        |
+| server.servlet.context-path                                                   |             | `/tjenester/personalmappe`                                               |
