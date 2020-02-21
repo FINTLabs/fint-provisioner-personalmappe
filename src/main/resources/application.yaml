@@ -1,3 +1,7 @@
+springfox:
+    title: 'FINT Personalmappe Provisioning Service'
+    version: '1.0.0'
+
 fint:
     endpoints:
         personalressurs: https://api.felleskomponent.no/administrasjon/personal/personalressurs
@@ -10,14 +14,14 @@ fint:
     organisations:
         viken-no:
             registration: viken-no
-            username: 
+            username:
             password:
             personalressurskategori:
             - F
             - M
             bulk-limit: 5
-            bulk: true
-            delta: true
+            bulk: false
+            delta: false
 spring:
     security:
         oauth2:
@@ -32,9 +36,9 @@ spring:
                 provider:
                     fint:
                         token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
-    data:
-        mongodb:
-            uri:
+data:
+    mongodb:
+        uri:
 server:
     servlet:
         context-path: /tjenester/personalmappe

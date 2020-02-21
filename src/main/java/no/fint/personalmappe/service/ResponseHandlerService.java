@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.retry.Retry;
 
+import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Duration;
 
@@ -27,9 +28,18 @@ public class ResponseHandlerService {
     private long fixedBackoff;
 
     @Value("${fint.status-pending.max-retry:2}")
-    private long maxReties;
+    private long maxRetries;
 
     private final MongoDBRepository mongoDBRepository;
+    public Retry<?> finalStatusPending;
+
+    @PostConstruct
+    public void init() {
+       finalStatusPending = Retry.anyOf(FinalStatusPendingException.class)
+                .fixedBackoff(Duration.ofSeconds(fixedBackoff))
+                .retryMax(maxRetries)
+                .doOnRetry(exception -> log.info("{}", exception));
+    }
 
     public ResponseHandlerService(MongoDBRepository mongoDBRepository) {
         this.mongoDBRepository = mongoDBRepository;
@@ -118,11 +128,6 @@ public class ResponseHandlerService {
                 break;
         }
     }
-
-    public final Retry<?> finalStatusPending = Retry.anyOf(FinalStatusPendingException.class)
-            .fixedBackoff(Duration.ofSeconds(fixedBackoff))
-            .retryMax(maxReties)
-            .doOnRetry(exception -> log.info("{}", exception));
 
     private URI getSelfLink(PersonalmappeResource personalmappeResource) {
         return personalmappeResource.getSelfLinks().stream()

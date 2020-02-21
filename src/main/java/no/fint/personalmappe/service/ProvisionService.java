@@ -1,7 +1,5 @@
 package no.fint.personalmappe.service;
 
-import lombok.Builder;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
@@ -11,6 +9,7 @@ import no.fint.personalmappe.factory.PersonalmappeResourceFactory;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
 import no.fint.personalmappe.model.GraphQLQuery;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
+import no.fint.personalmappe.model.PersonalmappeResourceWithUsername;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
@@ -111,7 +110,7 @@ public class ProvisionService {
                 .filter(Objects::nonNull)
                 .forEach(personalmappeResourceWithUsername ->
                         provision(orgId, personalmappeResourceWithUsername.getUsername(),
-                                personalmappeResourceWithUsername.personalmappeResource));
+                                personalmappeResourceWithUsername.getPersonalmappeResource()));
     }
 
     public PersonalmappeResourceWithUsername getPersonalmappeResource(String orgId, String username) {
@@ -137,13 +136,6 @@ public class ProvisionService {
                         .username(username)
                         .personalmappeResource(personalmappeResources.get(0))
                         .build() : null);
-    }
-
-    @Data
-    @Builder
-    public static class PersonalmappeResourceWithUsername {
-        private String username;
-        private PersonalmappeResource personalmappeResource;
     }
 
     public void provision(String orgId, String username, PersonalmappeResource personalmappeResource) {

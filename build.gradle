@@ -16,6 +16,7 @@ configurations {
 }
 
 repositories {
+	jcenter()
 	mavenCentral()
 	maven { url "https://dl.bintray.com/fint/maven" }
 }
@@ -31,6 +32,9 @@ dependencies {
 	implementation 'io.projectreactor.addons:reactor-extra'
 
 	implementation 'org.apache.commons:commons-lang3'
+
+	implementation 'com.github.springfox.loader:springfox-loader:2.0.0'
+
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

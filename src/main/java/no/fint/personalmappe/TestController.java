@@ -18,49 +18,6 @@ import java.util.concurrent.TimeUnit;
 @RestController
 public class TestController {
 
-    private final ProvisionService provisionService;
-    private final MongoDBRepository mongoDBRepository;
-    private final FintRepository fintRepository;
-
-    @Value("${fint.endpoints.personalressurs}")
-    private URI personalressursEndpoint;
-
-    public TestController(ProvisionService provisionService, MongoDBRepository mongoDBRepository, FintRepository fintRepository) {
-        this.provisionService = provisionService;
-        this.mongoDBRepository = mongoDBRepository;
-        this.fintRepository = fintRepository;
-    }
-
-    @GetMapping("/{orgId}/provision/{limit}")
-    public void getPersonalmappeResource(@PathVariable String orgId, @PathVariable int limit) {
-        provisionService.provisionByOrgId(
-                orgId,
-                limit,
-                fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint)
-        );
-    }
-
-    @GetMapping("/{orgId}/{username}")
-    public ProvisionService.PersonalmappeResourceWithUsername getPersonalmappeResource(@PathVariable String orgId, @PathVariable String username) {
-        return provisionService.getPersonalmappeResource(orgId, username);
-    }
-
-    @PostMapping("/{orgId}/{username}")
-    public ResponseEntity<?> postPersonalmappeResource(@PathVariable String orgId, @PathVariable String username) throws InterruptedException {
-        ProvisionService.PersonalmappeResourceWithUsername personalmappeResource = getPersonalmappeResource(orgId, username);
-
-        if (personalmappeResource == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        provisionService.provision(orgId, username, personalmappeResource.getPersonalmappeResource());
-        TimeUnit.SECONDS.sleep(1);
-
-        return mongoDBRepository.findById(orgId + "_" + NINUtilities.getNIN(personalmappeResource.getPersonalmappeResource()))
-                .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
-                .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
-    }
-
     @PostMapping("/post")
     public ResponseEntity<?> dummyPost() {
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/tjenester/personalmappe/status")).build();
@@ -73,6 +30,6 @@ public class TestController {
 
     @GetMapping("/status")
     public ResponseEntity<?> dummyStatus() {
-        return ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("http://localhost:8080/tjenester/personalmappe/put")).build();
+        return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/tjenester/personalmappe/put")).build();
     }
 }
