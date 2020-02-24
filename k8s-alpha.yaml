@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: provisioner-personalmappe
-          image: fintlabs.azurecr.io/provisioner-personalmappe:build.19
+          image: fintlabs.azurecr.io/provisioner-personalmappe:build.22
           resources:
             limits:
               memory: "2Gi"
@@ -43,7 +43,7 @@ spec:
             timeoutSeconds: 5
             httpGet:
               port: 8080
-              path: /tjenester/personalmappe/actuator/health
+              path: /actuator/health
           env:
             - name: TZ
               value: Europe/Oslo
@@ -78,7 +78,7 @@ spec:
                   key: mongodb
             - name: spring.data.mongodb.database
               value: personalmappe-alpha
-            - name: server.servlet.context-path
-              value: /
             - name: logging.level.no.fint
               value: TRACE
+            - name: fint.endpoints.personalmappe
+              value: http://10.96.0.226:8080/post

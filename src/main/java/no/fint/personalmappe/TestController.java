@@ -20,16 +20,16 @@ public class TestController {
 
     @PostMapping("/post")
     public ResponseEntity<?> dummyPost() {
-        return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/tjenester/personalmappe/status")).build();
+        return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/status")).build();
     }
 
     @PutMapping("/put")
     public ResponseEntity<?> dummyPut() {
-        return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/tjenester/personalmappe/status")).build();
+        return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/status")).build();
     }
 
     @GetMapping("/status")
     public ResponseEntity<?> dummyStatus() {
-        return ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("http://localhost:8080/tjenester/personalmappe/put")).build();
+        return ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("http://localhost:8080/put")).build();
     }
 }
