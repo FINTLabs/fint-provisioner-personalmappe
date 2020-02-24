@@ -49,30 +49,32 @@ spec:
               value: Europe/Oslo
             - name: JAVA_TOOL_OPTIONS
                 value: -XX:+ExitOnOutOfMemoryError -Xmx1G
-            - name: spring.security.oauth2.client.registration.rogfk.client-id
+            - name: spring.security.oauth2.client.registration.viken-no.client-id
               valueFrom:
                 secretKeyRef:
                   key: client-id
-                  name: kulturtanken-rogaland
-            - name: spring.security.oauth2.client.registration.rogfk.client-secret
+                  name: viken-personalmapper-service-test
+            - name: spring.security.oauth2.client.registration.viken-no.client-secret
               valueFrom:
                 secretKeyRef:
                   key: client-secret
-                  name: kulturtanken-rogaland
-            - name: fint.organisations.rogfk.username
+                  name: viken-personalmapper-service-test
+            - name: fint.organisations.viken-no.username
               valueFrom:
                 secretKeyRef:
-                  name: kulturtanken-rogaland
                   key: username
-            - name: fint.organisations.rogfk.password
+                  name: viken-personalmapper-service-test
+            - name: fint.organisations.viken-no.password
               valueFrom:
                 secretKeyRef:
-                  name: kulturtanken-rogaland
                   key: password
+                  name: viken-personalmapper-service-test
+            - name: fint.organisations.viken-no.registration
+              value: viken-no
             - name: spring.data.mongodb.uri
               valueFrom:
                 secretKeyRef:
                   name: fint-mongo
                   key: mongodb
             - name: spring.data.mongodb.database
-              value: provisioner-personalmappe
+              value: personalmappe-alpha

@@ -36,9 +36,10 @@ spring:
                 provider:
                     fint:
                         token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
-data:
-    mongodb:
-        uri:
+    data:
+        mongodb:
+            uri:
+            database:
 server:
     servlet:
         context-path: /tjenester/personalmappe
