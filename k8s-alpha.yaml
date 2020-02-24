@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: provisioner-personalmappe
-          image: fintlabs.azurecr.io/provisioner-personalmappe:build.1
+          image: fintlabs.azurecr.io/provisioner-personalmappe:build.19
           resources:
             limits:
               memory: "2Gi"
@@ -48,7 +48,7 @@ spec:
             - name: TZ
               value: Europe/Oslo
             - name: JAVA_TOOL_OPTIONS
-                value: -XX:+ExitOnOutOfMemoryError -Xmx1G
+              value: -XX:+ExitOnOutOfMemoryError -Xmx1G
             - name: spring.security.oauth2.client.registration.viken-no.client-id
               valueFrom:
                 secretKeyRef:
@@ -78,3 +78,7 @@ spec:
                   key: mongodb
             - name: spring.data.mongodb.database
               value: personalmappe-alpha
+            - name: server.servlet.context-path
+              value: /
+            - name: logging.level.no.fint
+              value: TRACE
