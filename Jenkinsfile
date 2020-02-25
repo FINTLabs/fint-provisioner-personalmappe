@@ -3,7 +3,10 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh "docker build -t ${GIT_COMMIT} ."
+                withDockerRegistry([credentialsId: 'fintlabs.azurecr.io', url: 'https://fintlabs.azurecr.io']) {
+                    sh "docker pull fintlabs.azurecr.io/personalmappe-frontend:latest"
+                    sh "docker build -t ${GIT_COMMIT} ."
+                }
             }
         }
         stage('Publish Latest') {
