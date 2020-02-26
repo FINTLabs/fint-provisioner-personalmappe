@@ -65,8 +65,7 @@ public class ProvisionService {
                     if (props.isBulk()) {
                         log.trace("Bulking personalmapper for {}", orgId);
                         provisionByOrgId(orgId, props.getBulkLimit(), fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint));
-                    }
-                    else {
+                    } else {
                         log.trace("Bulk is disabled for {}", orgId);
                     }
                 });
@@ -80,8 +79,7 @@ public class ProvisionService {
                     if (props.isDelta()) {
                         log.trace("Delta personalmapper for {}", orgId);
                         provisionByOrgId(orgId, 0, fintRepository.getUpdates(orgId, PersonalressursResources.class, personalressursEndpoint));
-                    }
-                    else {
+                    } else {
                         log.trace("Delta is disabled for {}", orgId);
                     }
                 });
@@ -144,22 +142,38 @@ public class ProvisionService {
         Optional<MongoDBPersonalmappe> mongoDBPersonalmappe = mongoDBRepository.findById(id);
 
         if (mongoDBPersonalmappe.isPresent() && mongoDBPersonalmappe.get().getStatus() == HttpStatus.CREATED) {
-            fintRepository.putForEntity(orgId, personalmappeResource, mongoDBPersonalmappe.get().getAssociation())
-                    .doOnSuccess(status -> responseHandlerService.handleStatus(orgId, id, username, status))
-                    .blockOptional()
-                    .ifPresent(clientResponse -> getForResource(orgId, id, username, clientResponse));
+            onUpdate(orgId, personalmappeResource, mongoDBPersonalmappe.get());
         } else {
-            fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
-                    .doOnSuccess(status -> responseHandlerService.handleStatus(orgId, id, username, status))
-                    .blockOptional()
-                    .ifPresent(clientResponse -> getForResource(orgId, id, username, clientResponse));
+            onCreate(orgId, username, personalmappeResource, id);
         }
     }
 
-    private void getForResource(String orgId, String id, String username, ResponseEntity<Void> status) {
-        fintRepository.getForEntity(orgId, Object.class, status.getHeaders().getLocation())
-                .doOnSuccess(resource -> responseHandlerService.handleResource(resource, orgId, id, username))
-                .doOnError(WebClientResponseException.class, error -> responseHandlerService.handleError(error, orgId, id, username))
+    private void onUpdate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
+        fintRepository.putForEntity(orgId, personalmappeResource, mongoDBPersonalmappe.getAssociation())
+                .doOnSuccess(status -> responseHandlerService.handleStatus(mongoDBPersonalmappe, status))
+                .blockOptional()
+                .ifPresent(clientResponse -> getForResource(mongoDBPersonalmappe, clientResponse));
+    }
+
+    private void onCreate(String orgId, String username, PersonalmappeResource personalmappeResource, String id) {
+        fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
+                .doOnSuccess(status -> responseHandlerService.handleStatusOnNew(orgId, id, username, status))
+                .blockOptional()
+                .ifPresent(clientResponse -> {
+                    Optional<MongoDBPersonalmappe> byId = mongoDBRepository.findById(id);
+                    if (byId.isPresent()) {
+                        getForResource(byId.get(), clientResponse);
+                    } else {
+                        log.error("Unable to find {} in database during new state", id);
+                    }
+                });
+    }
+
+    private void getForResource(MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Void> status) {
+        fintRepository.getForEntity(mongoDBPersonalmappe.getOrgId(), Object.class, status.getHeaders().getLocation())
+                .doOnSuccess(resource -> responseHandlerService.handleResource(resource, mongoDBPersonalmappe))
+                .doOnError(WebClientResponseException.class,
+                        error -> responseHandlerService.handleError(error, mongoDBPersonalmappe))
                 .retryWhen(responseHandlerService.finalStatusPending)
                 .subscribe();
     }
