@@ -13,7 +13,7 @@ fint:
         delta: 0 */5 8-16 * * MON-FRI
     organisations:
         viken-no:
-            registration: viken-no
+            registration: viken
             username:
             password:
             personalressurskategori:
@@ -27,7 +27,7 @@ spring:
         oauth2:
             client:
                 registration:
-                    viken-no:
+                    viken:
                         client-id:
                         client-secret:
                         authorization-grant-type: password

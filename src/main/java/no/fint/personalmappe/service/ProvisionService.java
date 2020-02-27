@@ -48,8 +48,6 @@ public class ProvisionService {
     private final ResponseHandlerService responseHandlerService;
     private final OrganisationProperties organisationProperties;
 
-    private final GraphQLQuery graphQLQuery = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
-
     public ProvisionService(FintRepository fintRepository, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, ResponseHandlerService responseHandlerService) {
         this.fintRepository = fintRepository;
         this.organisationProperties = organisationProperties;
@@ -102,16 +100,19 @@ public class ProvisionService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        usernames.stream()
+        usernames.parallelStream()
                 .limit(limit == 0 ? usernames.size() : limit)
                 .map(username -> getPersonalmappeResource(orgId, username))
                 .filter(Objects::nonNull)
-                .forEach(personalmappeResourceWithUsername ->
-                        provision(orgId, personalmappeResourceWithUsername.getUsername(),
-                                personalmappeResourceWithUsername.getPersonalmappeResource()));
+                .forEach(personalmappeResourceWithUsername -> {
+                    provision(orgId, personalmappeResourceWithUsername.getUsername(),
+                            personalmappeResourceWithUsername.getPersonalmappeResource());
+                });
     }
 
     public PersonalmappeResourceWithUsername getPersonalmappeResource(String orgId, String username) {
+        GraphQLQuery graphQLQuery = new GraphQLQuery();
+        graphQLQuery.setQuery(GraphQLUtilities.getGraphQLQuery("personalressurs.graphql"));
         graphQLQuery.setVariables(Collections.singletonMap("brukernavn", username));
 
         List<PersonalmappeResource> personalmappeResources =
