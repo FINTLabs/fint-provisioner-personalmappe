@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.*;
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -48,7 +49,7 @@ public class FintRepository {
 
         Mono<T> resources = webClient.get()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
+                .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .retrieve()
                 .bodyToMono(clazz);
 
@@ -74,7 +75,7 @@ public class FintRepository {
 
         return webClient.get()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
+                .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .retrieve()
                 .toEntity(clazz);
     }
@@ -86,34 +87,34 @@ public class FintRepository {
 
         return webClient.post()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
+                .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .bodyValue(value)
                 .retrieve()
                 .bodyToMono(clazz);
     }
 
-    public <T> Mono<ResponseEntity<Void>> postForEntity(String orgId, PersonalmappeResource personalmappeResource, URI uri) {
+    public Mono<ResponseEntity<Void>> postForEntity(String orgId, PersonalmappeResource personalmappeResource, URI uri) {
         OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
 
         OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
 
         return webClient.post()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
+                .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .bodyValue(personalmappeResource)
                 .retrieve()
                 .toBodilessEntity();
     }
 
-    public <T> Mono<ResponseEntity<Void>> putForEntity(String orgId, Object bodyValue, URI uri) {
+    public Mono<ResponseEntity<Void>> putForEntity(String orgId, PersonalmappeResource personalmappeResource, URI uri) {
         OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
 
         OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
 
         return webClient.put()
                 .uri(uri)
-                .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
-                .bodyValue(bodyValue)
+                .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
+                .bodyValue(personalmappeResource)
                 .retrieve()
                 .toBodilessEntity();
     }
