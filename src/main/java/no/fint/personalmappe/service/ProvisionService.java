@@ -99,6 +99,8 @@ public class ProvisionService {
                 .map(Identifikator::getIdentifikatorverdi)
                 .collect(Collectors.toList());
 
+        log.trace("Found {} usernames", usernames.size());
+
         usernames.parallelStream()
                 .limit(limit == 0 ? usernames.size() : limit)
                 .map(username -> getPersonalmappeResource(orgId, username))
