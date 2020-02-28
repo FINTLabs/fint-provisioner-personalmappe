@@ -212,6 +212,7 @@ public class ProvisionService {
     private String getUsername(PersonalmappeResource personalmappeResource) {
         return personalmappeResource.getPersonalressurs().stream()
                 .map(Link::getHref)
+                .map(href -> StringUtils.substringAfterLast(href, "/"))
                 .findAny()
                 .orElse(null);
     }

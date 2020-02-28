@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
-import no.fint.personalmappe.model.PersonalmappeResourceWithUsername;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
