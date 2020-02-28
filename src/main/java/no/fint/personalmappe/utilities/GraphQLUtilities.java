@@ -1,7 +1,5 @@
 package no.fint.personalmappe.utilities;
 
-import no.fint.personalmappe.model.GraphQLQuery;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;

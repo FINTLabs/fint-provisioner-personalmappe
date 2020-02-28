@@ -2,6 +2,7 @@ package no.fint.personalmappe.service;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
@@ -9,7 +10,6 @@ import no.fint.personalmappe.factory.PersonalmappeResourceFactory;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
 import no.fint.personalmappe.model.GraphQLQuery;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
-import no.fint.personalmappe.model.PersonalmappeResourceWithUsername;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
@@ -103,13 +103,10 @@ public class ProvisionService {
                 .limit(limit == 0 ? usernames.size() : limit)
                 .map(username -> getPersonalmappeResource(orgId, username))
                 .filter(Objects::nonNull)
-                .forEach(personalmappeResourceWithUsername -> {
-                    provision(orgId, personalmappeResourceWithUsername.getUsername(),
-                            personalmappeResourceWithUsername.getPersonalmappeResource());
-                });
+                .forEach(personalmappeResource -> provision(orgId, personalmappeResource));
     }
 
-    public PersonalmappeResourceWithUsername getPersonalmappeResource(String orgId, String username) {
+    public PersonalmappeResource getPersonalmappeResource(String orgId, String username) {
         GraphQLQuery graphQLQuery = new GraphQLQuery();
         graphQLQuery.setQuery(GraphQLUtilities.getGraphQLQuery("personalressurs.graphql"));
         graphQLQuery.setVariables(Collections.singletonMap("brukernavn", username));
@@ -129,15 +126,13 @@ public class ProvisionService {
 
         log.trace("{} {}", username, personalmappeResources.size());
 
-        return (personalmappeResources.size() == 1 ?
-                PersonalmappeResourceWithUsername.builder()
-                        .username(username)
-                        .personalmappeResource(personalmappeResources.get(0))
-                        .build() : null);
+        return (personalmappeResources.size() == 1 ? personalmappeResources.get(0) : null);
     }
 
-    public void provision(String orgId, String username, PersonalmappeResource personalmappeResource) {
+    public void provision(String orgId, PersonalmappeResource personalmappeResource) {
         String id = orgId + "_" + NINUtilities.getNIN(personalmappeResource);
+
+        String username = getUsername(personalmappeResource);
 
         Optional<MongoDBPersonalmappe> mongoDBPersonalmappe = mongoDBRepository.findById(id);
 
@@ -212,5 +207,12 @@ public class ProvisionService {
                 && !personalmappeResource.getArbeidssted().isEmpty()
                 && !personalmappeResource.getLeder().isEmpty()
                 && Objects.nonNull(personalmappeResource.getNavn()));
+    }
+
+    private String getUsername(PersonalmappeResource personalmappeResource) {
+        return personalmappeResource.getPersonalressurs().stream()
+                .map(Link::getHref)
+                .findAny()
+                .orElse(null);
     }
 }

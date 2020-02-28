@@ -1,6 +1,7 @@
 package no.fint.personalmappe;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
 import no.fint.personalmappe.model.PersonalmappeResourceWithUsername;
@@ -59,22 +60,22 @@ public class ApiController {
         return ResponseEntity.ok(new ArrayList<>(organisationProperties.getOrganisations().keySet()));
     }
 
-    public PersonalmappeResourceWithUsername getPersonalmappeResourceAbleToBeProvisioned(String orgId, String username) {
+    public PersonalmappeResource getPersonalmappeResourceAbleToBeProvisioned(String orgId, String username) {
         return provisionService.getPersonalmappeResource(orgId, username);
     }
 
     @PostMapping("/provisioning/username/{username}")
     public ResponseEntity<?> provisionPersonalmappeByUsername(@RequestHeader("x-orgid") String orgId, @PathVariable String username) throws InterruptedException {
-        PersonalmappeResourceWithUsername personalmappeResource = getPersonalmappeResourceAbleToBeProvisioned(orgId, username);
+        PersonalmappeResource personalmappeResource = getPersonalmappeResourceAbleToBeProvisioned(orgId, username);
 
         if (personalmappeResource == null) {
             return ResponseEntity.notFound().build();
         }
 
-        provisionService.provision(orgId, username, personalmappeResource.getPersonalmappeResource());
+        provisionService.provision(orgId, personalmappeResource);
         TimeUnit.SECONDS.sleep(1);
 
-        return mongoDBRepository.findById(orgId + "_" + NINUtilities.getNIN(personalmappeResource.getPersonalmappeResource()))
+        return mongoDBRepository.findById(orgId + "_" + NINUtilities.getNIN(personalmappeResource))
                 .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
                 .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
     }
