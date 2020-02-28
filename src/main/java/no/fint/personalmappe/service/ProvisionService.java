@@ -97,7 +97,6 @@ public class ProvisionService {
                 .map(PersonalressursResource::getBrukernavn)
                 .filter(Objects::nonNull)
                 .map(Identifikator::getIdentifikatorverdi)
-                .distinct()
                 .collect(Collectors.toList());
 
         usernames.parallelStream()
