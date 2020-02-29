@@ -100,12 +100,13 @@ public class ProvisionService {
                 .collect(Collectors.toList());
 
         log.trace("Found {} usernames", usernames.size());
-
+        log.trace("Start provisioning {} users", limit == 0 ? usernames.size() : limit);
         usernames.parallelStream()
                 .limit(limit == 0 ? usernames.size() : limit)
                 .map(username -> getPersonalmappeResource(orgId, username))
                 .filter(Objects::nonNull)
                 .forEach(personalmappeResource -> provision(orgId, personalmappeResource));
+        log.trace("End provisioning");
     }
 
     public PersonalmappeResource getPersonalmappeResource(String orgId, String username) {

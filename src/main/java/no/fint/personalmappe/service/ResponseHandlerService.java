@@ -2,6 +2,7 @@ package no.fint.personalmappe.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.MongoBulkWriteException;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
@@ -49,8 +50,8 @@ public class ResponseHandlerService {
     private void save(MongoDBPersonalmappe mongoDBPersonalmappe) {
         try {
             mongoDBRepository.save(mongoDBPersonalmappe);
-        } catch (OptimisticLockingFailureException e) {
-            log.error("{}", e.getMessage(), e);
+        } catch (OptimisticLockingFailureException | MongoBulkWriteException e) {
+            log.error("{} -> {}", e.getMessage(), mongoDBPersonalmappe);
         }
     }
 
