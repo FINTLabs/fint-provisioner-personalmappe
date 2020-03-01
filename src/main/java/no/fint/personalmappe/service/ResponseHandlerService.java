@@ -47,16 +47,17 @@ public class ResponseHandlerService {
         this.mongoDBRepository = mongoDBRepository;
     }
 
-    private void save(MongoDBPersonalmappe mongoDBPersonalmappe) {
+    private MongoDBPersonalmappe save(MongoDBPersonalmappe mongoDBPersonalmappe) {
         try {
-            mongoDBRepository.save(mongoDBPersonalmappe);
+            return mongoDBRepository.save(mongoDBPersonalmappe);
         } catch (OptimisticLockingFailureException | MongoBulkWriteException e) {
             log.error("{} -> {}", e.getMessage(), mongoDBPersonalmappe);
         }
+        return mongoDBPersonalmappe;
     }
 
-    public void handleStatusOnNew(String orgId, String id, String username, ResponseEntity<Void> status) {
-        save(MongoDBPersonalmappe.builder()
+    public MongoDBPersonalmappe handleStatusOnNew(String orgId, String id, String username, ResponseEntity<Void> status) {
+        return save(MongoDBPersonalmappe.builder()
                 .id(id)
                 .username(username)
                 .orgId(orgId)

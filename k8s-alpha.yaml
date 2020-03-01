@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: provisioner-personalmappe
-          image: fintlabs.azurecr.io/provisioner-personalmappe:PR-3.1
+          image: fintlabs.azurecr.io/provisioner-personalmappe:PR-3.2
           resources:
             limits:
               memory: "2Gi"
