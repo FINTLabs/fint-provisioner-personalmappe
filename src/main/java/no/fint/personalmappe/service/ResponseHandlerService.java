@@ -29,7 +29,7 @@ public class ResponseHandlerService {
     @Value("${fint.status-pending.fixed-backoff:5}")
     private long fixedBackoff;
 
-    @Value("${fint.status-pending.max-retry:2}")
+    @Value("${fint.status-pending.max-retry:1}")
     private long maxRetries;
 
     private final MongoDBRepository mongoDBRepository;
