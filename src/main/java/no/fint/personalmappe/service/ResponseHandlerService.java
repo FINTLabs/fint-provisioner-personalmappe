@@ -56,26 +56,24 @@ public class ResponseHandlerService {
         return mongoDBPersonalmappe;
     }
 
-    public MongoDBPersonalmappe handleStatusOnNew(String orgId, String id, String username, ResponseEntity<Void> status) {
+    public MongoDBPersonalmappe handleStatusOnNew(String orgId, String id, String username) {
         return save(MongoDBPersonalmappe.builder()
                 .id(id)
                 .username(username)
                 .orgId(orgId)
                 .status(HttpStatus.ACCEPTED)
-                .association(status.getHeaders().getLocation())
                 .build());
     }
 
-    public void handleStatus(MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Void> status) {
+    public void handleStatus(MongoDBPersonalmappe mongoDBPersonalmappe) {
         mongoDBPersonalmappe.setStatus(HttpStatus.ACCEPTED);
-        mongoDBPersonalmappe.setAssociation(status.getHeaders().getLocation());
         save(mongoDBPersonalmappe);
     }
 
-    public void handleResource(ResponseEntity<Object> getForResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
-        if (getForResource.getStatusCode().is3xxRedirection()) {
+    public void handleResource(ResponseEntity<Object> responseEntity, MongoDBPersonalmappe mongoDBPersonalmappe) {
+        if (responseEntity.getStatusCode().is3xxRedirection()) {
               mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
-              mongoDBPersonalmappe.setAssociation(getForResource.getHeaders().getLocation());
+              mongoDBPersonalmappe.setAssociation(responseEntity.getHeaders().getLocation());
               save(mongoDBPersonalmappe);
         } else {
             throw new FinalStatusPendingException();

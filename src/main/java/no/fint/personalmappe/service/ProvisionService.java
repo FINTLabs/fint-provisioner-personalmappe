@@ -18,6 +18,7 @@ import no.fint.personalmappe.utilities.NINUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -138,20 +139,31 @@ public class ProvisionService {
 
         Optional<MongoDBPersonalmappe> mongoDBPersonalmappe = mongoDBRepository.findById(id);
 
-        if (!mongoDBPersonalmappe.isPresent()) {
-            onCreate(orgId, personalmappeResource, id, username);
-        } else if (mongoDBPersonalmappe.get().getStatus() == HttpStatus.CREATED) {
-            onUpdate(orgId, personalmappeResource, mongoDBPersonalmappe.get());
+        if (mongoDBPersonalmappe.isPresent()) {
+            if (mongoDBPersonalmappe.get().getAssociation() == null) {
+                onFailedCreate(orgId, personalmappeResource, mongoDBPersonalmappe.get());
+            } else {
+                onUpdate(orgId, personalmappeResource, mongoDBPersonalmappe.get());
+            }
         } else {
-            onFailedCreateOrUpdate(orgId, personalmappeResource, mongoDBPersonalmappe.get());
+            onCreate(orgId, personalmappeResource, id, username);
         }
     }
 
     private void onCreate(String orgId, PersonalmappeResource personalmappeResource, String id, String username) {
         fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
                 .doOnSuccess(responseEntity -> {
-                    MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.handleStatusOnNew(orgId, id, username, responseEntity);
-                    getForResource(mongoDBPersonalmappe);
+                    MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.handleStatusOnNew(orgId, id, username);
+                    getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
+                })
+                .block();
+    }
+
+    private void onFailedCreate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
+        fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
+                .doOnSuccess(responseEntity -> {
+                    responseHandlerService.handleStatus(mongoDBPersonalmappe);
+                    getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
                 })
                 .block();
     }
@@ -159,23 +171,14 @@ public class ProvisionService {
     private void onUpdate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
         fintRepository.putForEntity(orgId, personalmappeResource, mongoDBPersonalmappe.getAssociation())
                 .doOnSuccess(responseEntity -> {
-                    responseHandlerService.handleStatus(mongoDBPersonalmappe, responseEntity);
-                    getForResource(mongoDBPersonalmappe);
+                    responseHandlerService.handleStatus(mongoDBPersonalmappe);
+                    getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
                 })
                 .block();
     }
 
-    private void onFailedCreateOrUpdate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
-        fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
-                .doOnSuccess(responseEntity -> {
-                    responseHandlerService.handleStatus(mongoDBPersonalmappe, responseEntity);
-                    getForResource(mongoDBPersonalmappe);
-                })
-                .block();
-    }
-
-    private void getForResource(MongoDBPersonalmappe mongoDBPersonalmappe) {
-        fintRepository.getForEntity(mongoDBPersonalmappe.getOrgId(), Object.class, mongoDBPersonalmappe.getAssociation())
+    private void getForResource(MongoDBPersonalmappe mongoDBPersonalmappe, URI location) {
+        fintRepository.getForEntity(mongoDBPersonalmappe.getOrgId(), Object.class, location)
                 .doOnSuccess(responseEntity -> responseHandlerService.handleResource(responseEntity, mongoDBPersonalmappe))
                 .doOnError(WebClientResponseException.class,
                         clientResponse -> responseHandlerService.handleError(clientResponse, mongoDBPersonalmappe))
