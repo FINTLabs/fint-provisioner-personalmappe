@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: provisioner-personalmappe
-          image: fintlabs.azurecr.io/provisioner-personalmappe:PR-3.2
+          image: fintlabs.azurecr.io/provisioner-personalmappe:PR-3.3
           resources:
             limits:
               memory: "2Gi"
@@ -81,10 +81,10 @@ spec:
             - name: logging.level.no.fint
               value: TRACE
             - name: fint.endpoints.personalmappe
-              value: http://10.96.0.226:8080/post
+              value: https://alpha.felleskomponent.no/administrasjon/personal/personalmappe
             - name: fint.organisations.viken-no.bulk
               value: "true"
             - name: fint.organisations.viken-no.delta
-              value: "true"
+              value: "false"
             - name: fint.organisations.viken-no.bulk-limit
-              value: "0"
+              value: "5"
