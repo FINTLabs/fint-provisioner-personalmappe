@@ -2,6 +2,7 @@ package no.fint.personalmappe.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.MongoBulkWriteException;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
@@ -28,7 +29,7 @@ public class ResponseHandlerService {
     @Value("${fint.status-pending.fixed-backoff:5}")
     private long fixedBackoff;
 
-    @Value("${fint.status-pending.max-retry:2}")
+    @Value("${fint.status-pending.max-retry:1}")
     private long maxRetries;
 
     private final MongoDBRepository mongoDBRepository;
@@ -46,34 +47,35 @@ public class ResponseHandlerService {
         this.mongoDBRepository = mongoDBRepository;
     }
 
-    private void save(MongoDBPersonalmappe mongoDBPersonalmappe) {
+    private MongoDBPersonalmappe save(MongoDBPersonalmappe mongoDBPersonalmappe) {
         try {
-            mongoDBRepository.save(mongoDBPersonalmappe);
-        } catch (OptimisticLockingFailureException e) {
-            log.error("{}", e.getMessage(), e);
+            return mongoDBRepository.save(mongoDBPersonalmappe);
+        } catch (OptimisticLockingFailureException | MongoBulkWriteException e) {
+            log.error("{} -> {}", e.getMessage(), mongoDBPersonalmappe);
         }
+        return mongoDBPersonalmappe;
     }
 
-    public void handleStatusOnNew(String orgId, String id, String username, ResponseEntity<Void> status) {
-        save(MongoDBPersonalmappe.builder()
+    public MongoDBPersonalmappe handleStatusOnNew(String orgId, String id, String username) {
+        return save(MongoDBPersonalmappe.builder()
                 .id(id)
                 .username(username)
                 .orgId(orgId)
                 .status(HttpStatus.ACCEPTED)
-                .association(status.getHeaders().getLocation())
                 .build());
     }
 
-    public void handleStatus(MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Void> status) {
+    public void handleStatus(MongoDBPersonalmappe mongoDBPersonalmappe) {
         mongoDBPersonalmappe.setStatus(HttpStatus.ACCEPTED);
-        mongoDBPersonalmappe.setAssociation(status.getHeaders().getLocation());
+        mongoDBPersonalmappe.setMessage(null);
         save(mongoDBPersonalmappe);
     }
 
-    public void handleResource(ResponseEntity<Object> getForResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
-        if (getForResource.getStatusCode().is3xxRedirection()) {
+    public void handleResource(ResponseEntity<Object> responseEntity, MongoDBPersonalmappe mongoDBPersonalmappe) {
+        if (responseEntity.getStatusCode().is3xxRedirection()) {
               mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
-              mongoDBPersonalmappe.setAssociation(getForResource.getHeaders().getLocation());
+              mongoDBPersonalmappe.setAssociation(responseEntity.getHeaders().getLocation());
+              mongoDBPersonalmappe.setMessage(null);
               save(mongoDBPersonalmappe);
         } else {
             throw new FinalStatusPendingException();
@@ -93,6 +95,7 @@ public class ResponseHandlerService {
                 if (personalmappeResources.getTotalItems() == 1) {
                     mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
                     mongoDBPersonalmappe.setAssociation(getSelfLink(personalmappeResources.getContent().get(0)));
+                    mongoDBPersonalmappe.setMessage(null);
                     save(mongoDBPersonalmappe);
                 } else {
                     mongoDBPersonalmappe.setStatus(HttpStatus.CONFLICT);
@@ -112,6 +115,7 @@ public class ResponseHandlerService {
                 break;
             case GONE:
                 mongoDBPersonalmappe.setStatus(HttpStatus.GONE);
+                mongoDBPersonalmappe.setMessage(null);
                 save(mongoDBPersonalmappe);
                 break;
             default:

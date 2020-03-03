@@ -88,3 +88,4 @@ spec:
               value: "false"
             - name: fint.organisations.viken-no.bulk-limit
               value: "150"
+

@@ -2,6 +2,7 @@ package no.fint.personalmappe.service;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
@@ -9,7 +10,6 @@ import no.fint.personalmappe.factory.PersonalmappeResourceFactory;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
 import no.fint.personalmappe.model.GraphQLQuery;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
-import no.fint.personalmappe.model.PersonalmappeResourceWithUsername;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
@@ -34,9 +34,6 @@ import java.util.stream.Collectors;
 @Service
 public class ProvisionService {
 
-    @Value("${fint.endpoints.personalressurs}")
-    private URI personalressursEndpoint;
-
     @Value("${fint.endpoints.personalmappe}")
     private URI personalmappeEndpoint;
 
@@ -48,8 +45,6 @@ public class ProvisionService {
     private final ResponseHandlerService responseHandlerService;
     private final OrganisationProperties organisationProperties;
 
-    private final GraphQLQuery graphQLQuery = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
-
     public ProvisionService(FintRepository fintRepository, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, ResponseHandlerService responseHandlerService) {
         this.fintRepository = fintRepository;
         this.organisationProperties = organisationProperties;
@@ -57,40 +52,12 @@ public class ProvisionService {
         this.responseHandlerService = responseHandlerService;
     }
 
-    @Scheduled(cron = "${fint.cron.bulk}")
-    public void bulk() {
-        organisationProperties.getOrganisations().keySet()
-                .forEach(orgId -> {
-                    OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
-                    if (props.isBulk()) {
-                        log.trace("Bulking personalmapper for {}", orgId);
-                        provisionByOrgId(orgId, props.getBulkLimit(), fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint));
-                    } else {
-                        log.trace("Bulk is disabled for {}", orgId);
-                    }
-                });
-    }
-
-    @Scheduled(cron = "${fint.cron.delta}")
-    public void delta() {
-        organisationProperties.getOrganisations().keySet()
-                .forEach(orgId -> {
-                    OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
-                    if (props.isDelta()) {
-                        log.trace("Delta personalmapper for {}", orgId);
-                        provisionByOrgId(orgId, 0, fintRepository.getUpdates(orgId, PersonalressursResources.class, personalressursEndpoint));
-                    } else {
-                        log.trace("Delta is disabled for {}", orgId);
-                    }
-                });
-    }
-
     public void provisionByOrgId(String orgId, int limit, Mono<PersonalressursResources> personalressursResources) {
         List<String> usernames = personalressursResources
                 .flatMapIterable(PersonalressursResources::getContent)
                 .collectList()
                 .blockOptional()
-                .orElse(Collections.emptyList())
+                .orElseGet(Collections::emptyList)
                 .stream()
                 .sorted(Comparator.comparing(resource -> Optional.ofNullable(resource.getBrukernavn())
                         .map(Identifikator::getIdentifikatorverdi)
@@ -99,19 +66,20 @@ public class ProvisionService {
                 .map(PersonalressursResource::getBrukernavn)
                 .filter(Objects::nonNull)
                 .map(Identifikator::getIdentifikatorverdi)
-                .distinct()
                 .collect(Collectors.toList());
 
-        usernames.stream()
+        log.trace("Start provisioning {} of {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
+        usernames.parallelStream()
                 .limit(limit == 0 ? usernames.size() : limit)
                 .map(username -> getPersonalmappeResource(orgId, username))
                 .filter(Objects::nonNull)
-                .forEach(personalmappeResourceWithUsername ->
-                        provision(orgId, personalmappeResourceWithUsername.getUsername(),
-                                personalmappeResourceWithUsername.getPersonalmappeResource()));
+                .forEach(personalmappeResource -> provision(orgId, personalmappeResource));
+        log.trace("End provisioning");
     }
 
-    public PersonalmappeResourceWithUsername getPersonalmappeResource(String orgId, String username) {
+    public PersonalmappeResource getPersonalmappeResource(String orgId, String username) {
+        GraphQLQuery graphQLQuery = new GraphQLQuery();
+        graphQLQuery.setQuery(GraphQLUtilities.getGraphQLQuery("personalressurs.graphql"));
         graphQLQuery.setVariables(Collections.singletonMap("brukernavn", username));
 
         List<PersonalmappeResource> personalmappeResources =
@@ -120,7 +88,7 @@ public class ProvisionService {
                         .map(GraphQLPersonalmappe::getResult)
                         .map(GraphQLPersonalmappe.Result::getPersonalressurs)
                         .map(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
-                        .orElse(Collections.emptyList())
+                        .orElseGet(Collections::emptyList)
                         .stream()
                         .filter(isActive(LocalDateTime.now()).and(isHovedstilling().and(hasPersonalressurskategori(orgId))))
                         .map(PersonalmappeResourceFactory::toPersonalmappeResource)
@@ -129,51 +97,59 @@ public class ProvisionService {
 
         log.trace("{} {}", username, personalmappeResources.size());
 
-        return (personalmappeResources.size() == 1 ?
-                PersonalmappeResourceWithUsername.builder()
-                        .username(username)
-                        .personalmappeResource(personalmappeResources.get(0))
-                        .build() : null);
+        return (personalmappeResources.size() == 1 ? personalmappeResources.get(0) : null);
     }
 
-    public void provision(String orgId, String username, PersonalmappeResource personalmappeResource) {
+    public void provision(String orgId, PersonalmappeResource personalmappeResource) {
         String id = orgId + "_" + NINUtilities.getNIN(personalmappeResource);
+
+        String username = getUsername(personalmappeResource);
 
         Optional<MongoDBPersonalmappe> mongoDBPersonalmappe = mongoDBRepository.findById(id);
 
-        if (mongoDBPersonalmappe.isPresent() && mongoDBPersonalmappe.get().getStatus() == HttpStatus.CREATED) {
-            onUpdate(orgId, personalmappeResource, mongoDBPersonalmappe.get());
+        if (mongoDBPersonalmappe.isPresent()) {
+            if (mongoDBPersonalmappe.get().getAssociation() == null) {
+                onFailedCreate(orgId, personalmappeResource, mongoDBPersonalmappe.get());
+            } else {
+                onUpdate(orgId, personalmappeResource, mongoDBPersonalmappe.get());
+            }
         } else {
-            onCreate(orgId, username, personalmappeResource, id);
+            onCreate(orgId, personalmappeResource, id, username);
         }
+    }
+
+    private void onCreate(String orgId, PersonalmappeResource personalmappeResource, String id, String username) {
+        fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
+                .doOnSuccess(responseEntity -> {
+                    MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.handleStatusOnNew(orgId, id, username);
+                    getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
+                })
+                .block();
+    }
+
+    private void onFailedCreate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
+        fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
+                .doOnSuccess(responseEntity -> {
+                    responseHandlerService.handleStatus(mongoDBPersonalmappe);
+                    getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
+                })
+                .block();
     }
 
     private void onUpdate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
         fintRepository.putForEntity(orgId, personalmappeResource, mongoDBPersonalmappe.getAssociation())
-                .doOnSuccess(status -> responseHandlerService.handleStatus(mongoDBPersonalmappe, status))
-                .blockOptional()
-                .ifPresent(clientResponse -> getForResource(mongoDBPersonalmappe, clientResponse));
+                .doOnSuccess(responseEntity -> {
+                    responseHandlerService.handleStatus(mongoDBPersonalmappe);
+                    getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
+                })
+                .block();
     }
 
-    private void onCreate(String orgId, String username, PersonalmappeResource personalmappeResource, String id) {
-        fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
-                .doOnSuccess(status -> responseHandlerService.handleStatusOnNew(orgId, id, username, status))
-                .blockOptional()
-                .ifPresent(clientResponse -> {
-                    Optional<MongoDBPersonalmappe> byId = mongoDBRepository.findById(id);
-                    if (byId.isPresent()) {
-                        getForResource(byId.get(), clientResponse);
-                    } else {
-                        log.error("Unable to find {} in database during new state", id);
-                    }
-                });
-    }
-
-    private void getForResource(MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Void> status) {
-        fintRepository.getForEntity(mongoDBPersonalmappe.getOrgId(), Object.class, status.getHeaders().getLocation())
-                .doOnSuccess(resource -> responseHandlerService.handleResource(resource, mongoDBPersonalmappe))
+    private void getForResource(MongoDBPersonalmappe mongoDBPersonalmappe, URI location) {
+        fintRepository.getForEntity(mongoDBPersonalmappe.getOrgId(), Object.class, location)
+                .doOnSuccess(responseEntity -> responseHandlerService.handleResource(responseEntity, mongoDBPersonalmappe))
                 .doOnError(WebClientResponseException.class,
-                        error -> responseHandlerService.handleError(error, mongoDBPersonalmappe))
+                        clientResponse -> responseHandlerService.handleError(clientResponse, mongoDBPersonalmappe))
                 .retryWhen(responseHandlerService.finalStatusPending)
                 .subscribe();
     }
@@ -212,5 +188,13 @@ public class ProvisionService {
                 && !personalmappeResource.getArbeidssted().isEmpty()
                 && !personalmappeResource.getLeder().isEmpty()
                 && Objects.nonNull(personalmappeResource.getNavn()));
+    }
+
+    private String getUsername(PersonalmappeResource personalmappeResource) {
+        return personalmappeResource.getPersonalressurs().stream()
+                .map(Link::getHref)
+                .map(href -> StringUtils.substringAfterLast(href, "/"))
+                .findAny()
+                .orElse(null);
     }
 }
