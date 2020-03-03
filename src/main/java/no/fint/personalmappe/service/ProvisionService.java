@@ -34,9 +34,6 @@ import java.util.stream.Collectors;
 @Service
 public class ProvisionService {
 
-    @Value("${fint.endpoints.personalressurs}")
-    private URI personalressursEndpoint;
-
     @Value("${fint.endpoints.personalmappe}")
     private URI personalmappeEndpoint;
 
@@ -55,34 +52,6 @@ public class ProvisionService {
         this.responseHandlerService = responseHandlerService;
     }
 
-    @Scheduled(cron = "${fint.cron.bulk}")
-    public void bulk() {
-        organisationProperties.getOrganisations().keySet()
-                .forEach(orgId -> {
-                    OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
-                    if (props.isBulk()) {
-                        log.trace("Bulking personalmapper for {}", orgId);
-                        provisionByOrgId(orgId, props.getBulkLimit(), fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint));
-                    } else {
-                        log.trace("Bulk is disabled for {}", orgId);
-                    }
-                });
-    }
-
-    @Scheduled(cron = "${fint.cron.delta}")
-    public void delta() {
-        organisationProperties.getOrganisations().keySet()
-                .forEach(orgId -> {
-                    OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
-                    if (props.isDelta()) {
-                        log.trace("Delta personalmapper for {}", orgId);
-                        provisionByOrgId(orgId, 0, fintRepository.getUpdates(orgId, PersonalressursResources.class, personalressursEndpoint));
-                    } else {
-                        log.trace("Delta is disabled for {}", orgId);
-                    }
-                });
-    }
-
     public void provisionByOrgId(String orgId, int limit, Mono<PersonalressursResources> personalressursResources) {
         List<String> usernames = personalressursResources
                 .flatMapIterable(PersonalressursResources::getContent)
@@ -99,8 +68,7 @@ public class ProvisionService {
                 .map(Identifikator::getIdentifikatorverdi)
                 .collect(Collectors.toList());
 
-        log.trace("Found {} usernames", usernames.size());
-        log.trace("Start provisioning {} users", limit == 0 ? usernames.size() : limit);
+        log.trace("Start provisioning {} users of total {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
         usernames.parallelStream()
                 .limit(limit == 0 ? usernames.size() : limit)
                 .map(username -> getPersonalmappeResource(orgId, username))

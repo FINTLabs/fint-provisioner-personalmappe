@@ -67,6 +67,7 @@ public class ResponseHandlerService {
 
     public void handleStatus(MongoDBPersonalmappe mongoDBPersonalmappe) {
         mongoDBPersonalmappe.setStatus(HttpStatus.ACCEPTED);
+        mongoDBPersonalmappe.setMessage(null);
         save(mongoDBPersonalmappe);
     }
 
@@ -74,6 +75,7 @@ public class ResponseHandlerService {
         if (responseEntity.getStatusCode().is3xxRedirection()) {
               mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
               mongoDBPersonalmappe.setAssociation(responseEntity.getHeaders().getLocation());
+              mongoDBPersonalmappe.setMessage(null);
               save(mongoDBPersonalmappe);
         } else {
             throw new FinalStatusPendingException();
@@ -93,6 +95,7 @@ public class ResponseHandlerService {
                 if (personalmappeResources.getTotalItems() == 1) {
                     mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
                     mongoDBPersonalmappe.setAssociation(getSelfLink(personalmappeResources.getContent().get(0)));
+                    mongoDBPersonalmappe.setMessage(null);
                     save(mongoDBPersonalmappe);
                 } else {
                     mongoDBPersonalmappe.setStatus(HttpStatus.CONFLICT);
@@ -112,6 +115,7 @@ public class ResponseHandlerService {
                 break;
             case GONE:
                 mongoDBPersonalmappe.setStatus(HttpStatus.GONE);
+                mongoDBPersonalmappe.setMessage(null);
                 save(mongoDBPersonalmappe);
                 break;
             default:

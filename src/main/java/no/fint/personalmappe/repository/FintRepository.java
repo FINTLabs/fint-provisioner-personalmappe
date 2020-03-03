@@ -3,6 +3,7 @@ package no.fint.personalmappe.repository;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
+import no.fint.personalmappe.model.GraphQLQuery;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -79,7 +80,7 @@ public class FintRepository {
                 .toEntity(clazz);
     }
 
-    public <T> Mono<T> post(String orgId, Class<T> clazz, Object value, URI uri) {
+    public <T> Mono<T> post(String orgId, Class<T> clazz, GraphQLQuery graphQLQuery, URI uri) {
         OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
 
         OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
@@ -87,7 +88,7 @@ public class FintRepository {
         return webClient.post()
                 .uri(uri)
                 .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
-                .bodyValue(value)
+                .bodyValue(graphQLQuery)
                 .retrieve()
                 .bodyToMono(clazz);
     }
