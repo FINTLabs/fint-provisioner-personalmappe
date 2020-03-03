@@ -68,7 +68,7 @@ public class ProvisionService {
                 .map(Identifikator::getIdentifikatorverdi)
                 .collect(Collectors.toList());
 
-        log.trace("Start provisioning {} users of total {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
+        log.trace("Start provisioning {} of {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
         usernames.parallelStream()
                 .limit(limit == 0 ? usernames.size() : limit)
                 .map(username -> getPersonalmappeResource(orgId, username))
