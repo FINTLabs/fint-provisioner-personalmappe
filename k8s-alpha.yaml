@@ -87,5 +87,7 @@ spec:
             - name: fint.organisations.viken-no.delta
               value: "false"
             - name: fint.organisations.viken-no.bulk-limit
-              value: "150"
+              value: "2000"
+            - name: fint.status-pending.max-retry
+              value: "10"
 

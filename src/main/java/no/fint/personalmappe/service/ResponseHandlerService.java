@@ -26,11 +26,15 @@ import java.time.Duration;
 @Service
 public class ResponseHandlerService {
 
-    @Value("${fint.status-pending.fixed-backoff:5}")
-    private long fixedBackoff;
+    @Value("${fint.status-pending.backoff:1}")
+    private long backoff;
 
-    @Value("${fint.status-pending.max-retry:1}")
-    private long maxRetries;
+    @Value("${fint.status-pending.max-backoff:5}")
+    private long maxBackoff;
+
+    @Value("${fint.status-pending.timeout:30}")
+    private long timeout;
+
 
     private final MongoDBRepository mongoDBRepository;
     public Retry<?> finalStatusPending;
@@ -38,8 +42,8 @@ public class ResponseHandlerService {
     @PostConstruct
     public void init() {
         finalStatusPending = Retry.anyOf(FinalStatusPendingException.class)
-                .fixedBackoff(Duration.ofSeconds(fixedBackoff))
-                .retryMax(maxRetries)
+                .exponentialBackoff(Duration.ofSeconds(backoff), Duration.ofMinutes(maxBackoff))
+                .timeout(Duration.ofMinutes(timeout))
                 .doOnRetry(exception -> log.info("{}", exception));
     }
 
