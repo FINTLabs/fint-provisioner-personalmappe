@@ -102,14 +102,19 @@ class ProvisionServiceSpec extends Specification {
                                 identifikatorverdi: '111'),
                         leder: new GraphQLPersonalmappe.Personalressurs(
                                 brukernavn: new GraphQLPersonalmappe.Identifikator(
-                                        identifikatorverdi: '222')
-                        )),
+                                        identifikatorverdi: '222')),
+                        overordnet: new GraphQLPersonalmappe.Organisasjonselement(
+                                organisasjonsId: new GraphQLPersonalmappe.Identifikator(
+                                        identifikatorverdi: '333'),
+                                leder: new GraphQLPersonalmappe.Personalressurs(
+                                        brukernavn: new GraphQLPersonalmappe.Identifikator(
+                                                identifikatorverdi: '444')))),
                 personalressurs: new GraphQLPersonalmappe.Personalressurs(
                         brukernavn: new GraphQLPersonalmappe.Identifikator(
-                                identifikatorverdi: '333'),
+                                identifikatorverdi: '555'),
                         person: new GraphQLPersonalmappe.Person(
                                 fodselsnummer: new GraphQLPersonalmappe.Identifikator(
-                                        identifikatorverdi: '444'),
+                                        identifikatorverdi: '666'),
                                 navn: new GraphQLPersonalmappe.Navn(
                                         fornavn: 'a',
                                         mellomnavn: 'b',

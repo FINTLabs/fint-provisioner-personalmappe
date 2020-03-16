@@ -18,21 +18,20 @@ public final class PersonalmappeResourceFactory {
 
     public static PersonalmappeResource toPersonalmappeResource(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
         PersonalmappeResource resource = new PersonalmappeResource();
-        getPersonalressurs(arbeidsforhold).ifPresent(resource::addPersonalressurs);
+        getPersonalressurs(arbeidsforhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(resource::addPersonalressurs);
         getPerson(arbeidsforhold).ifPresent(resource::addPerson);
         getNavn(arbeidsforhold).ifPresent(resource::setNavn);
         getArbeidssted(arbeidsforhold).ifPresent(resource::addArbeidssted);
-        resource.addLeder(getLeder(arbeidsforhold));
+        Optional.ofNullable(getLeder(arbeidsforhold)).ifPresent(resource::addLeder);
         resource.setPart(Collections.singletonList(new PartsinformasjonResource()));
         resource.setTittel("DUMMY");
         return resource;
     }
 
-    private static Optional<Link> getPersonalressurs(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
+    private static Optional<String> getPersonalressurs(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
         return Optional.ofNullable(arbeidsforhold.getPersonalressurs())
                 .map(GraphQLPersonalmappe.Personalressurs::getBrukernavn)
-                .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
-                .map(Link.apply(Personalressurs.class, "brukernavn"));
+                .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi);
     }
 
     private static Optional<Link> getPerson(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
@@ -68,6 +67,7 @@ public final class PersonalmappeResourceFactory {
                 .map(GraphQLPersonalmappe.Organisasjonselement::getLeder)
                 .map(GraphQLPersonalmappe.Personalressurs::getBrukernavn)
                 .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
+                .filter(username -> !username.equalsIgnoreCase(getPersonalressurs(arbeidsforhold).orElse(null)))
                 .map(Link.apply(Personalressurs.class, "brukernavn"))
                 .orElseGet(() -> getLedersLeder(arbeidsforhold));
     }
