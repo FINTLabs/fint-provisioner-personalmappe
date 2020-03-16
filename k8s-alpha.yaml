@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: provisioner-personalmappe
-          image: fintlabs.azurecr.io/provisioner-personalmappe:build.34
+          image: fintlabs.azurecr.io/provisioner-personalmappe:build.37
           resources:
             limits:
               memory: "2Gi"
@@ -87,7 +87,5 @@ spec:
             - name: fint.organisations.viken-no.delta
               value: "false"
             - name: fint.organisations.viken-no.bulk-limit
-              value: "2000"
-            - name: fint.status-pending.max-retry
-              value: "10"
+              value: "0"
 
