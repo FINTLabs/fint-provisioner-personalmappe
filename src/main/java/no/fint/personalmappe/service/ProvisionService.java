@@ -97,7 +97,18 @@ public class ProvisionService {
 
         log.trace("{} {}", username, personalmappeResources.size());
 
-        return (personalmappeResources.size() == 1 ? personalmappeResources.get(0) : null);
+        if (personalmappeResources.size() == 1) {
+            PersonalmappeResource personalmappeResource = personalmappeResources.get(0);
+
+            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
+                log.trace("Identical subject and leader for personalmappe: {}", getUsername(personalmappeResource));
+                return null;
+            }
+
+            return personalmappeResource;
+        }
+
+        return null;
     }
 
     public void provision(String orgId, PersonalmappeResource personalmappeResource) {
