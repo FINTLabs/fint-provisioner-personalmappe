@@ -44,7 +44,7 @@ class PolicyServiceSpec extends Specification {
     def "Saksstatus policy should return object with modified saksstatus"() {
         given:
         def saksstatusPolicy = "function titlePolicy(object) {" +
-                "PolicyHelper.replaceIdentifikatorValue(object, 'saksstatus', 'kode', '99');" +
+                "resource(object).link('saksstatus').id('kode').replaceValue('99');" +
                 "return object;" +
                 "}"
         when:
