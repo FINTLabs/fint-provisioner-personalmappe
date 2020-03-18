@@ -62,4 +62,26 @@ class PolicyServiceSpec extends Specification {
         then:
         name == "simplePolicy"
     }
+
+    def "If policy don't starts with keyword function exception should be thrown"() {
+        given:
+        def failedPolicy = "(o) { return o;}"
+
+        when:
+        service.validateFunctionSignature(failedPolicy)
+
+        then:
+        thrown(NoSuchMethodException)
+    }
+
+    def "If policy has multiple function parameters exception should be thrown"() {
+        given:
+        def failedPolicy = "function (o, r) { return o;}"
+
+        when:
+        service.validateFunctionSignature(failedPolicy)
+
+        then:
+        thrown(NoSuchMethodException)
+    }
 }
