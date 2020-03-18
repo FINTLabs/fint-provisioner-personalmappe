@@ -17,9 +17,6 @@ import no.fint.personalmappe.utilities.GraphQLUtilities;
 import no.fint.personalmappe.utilities.NINUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -44,12 +41,14 @@ public class ProvisionService {
     private final MongoDBRepository mongoDBRepository;
     private final ResponseHandlerService responseHandlerService;
     private final OrganisationProperties organisationProperties;
+    private final PolicyService policyService;
 
-    public ProvisionService(FintRepository fintRepository, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, ResponseHandlerService responseHandlerService) {
+    public ProvisionService(FintRepository fintRepository, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, ResponseHandlerService responseHandlerService, PolicyService policyService) {
         this.fintRepository = fintRepository;
         this.organisationProperties = organisationProperties;
         this.mongoDBRepository = mongoDBRepository;
         this.responseHandlerService = responseHandlerService;
+        this.policyService = policyService;
     }
 
     public void provisionByOrgId(String orgId, int limit, Mono<PersonalressursResources> personalressursResources) {
@@ -118,7 +117,14 @@ public class ProvisionService {
         }
     }
 
+    public void doTransformation(String orgId, PersonalmappeResource personalmappeResource) {
+        organisationProperties.getOrganisations().get(orgId).getTransformationScripts().forEach(script -> {
+            policyService.transform(script, personalmappeResource);
+        });
+    }
+
     private void onCreate(String orgId, PersonalmappeResource personalmappeResource, String id, String username) {
+        doTransformation(orgId, personalmappeResource);
         fintRepository.postForEntity(orgId, personalmappeResource, personalmappeEndpoint)
                 .doOnSuccess(responseEntity -> {
                     MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.handleStatusOnNew(orgId, id, username);
@@ -137,6 +143,7 @@ public class ProvisionService {
     }
 
     private void onUpdate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
+        doTransformation(orgId, personalmappeResource);
         fintRepository.putForEntity(orgId, personalmappeResource, mongoDBPersonalmappe.getAssociation())
                 .doOnSuccess(responseEntity -> {
                     responseHandlerService.handleStatus(mongoDBPersonalmappe);

@@ -26,7 +26,7 @@ class ProvisionServiceSpec extends Specification {
         mongoDBRepository = Mock()
         responseHandlerService = Mock()
         organisationProperties = Mock()
-        provisionService = new ProvisionService(fintRepository, organisationProperties, mongoDBRepository, responseHandlerService)
+        provisionService = new ProvisionService(fintRepository, organisationProperties, mongoDBRepository, responseHandlerService, policyService)
     }
 
     def "getPersonalmappeResources() returns list of personalmappeResource"() {

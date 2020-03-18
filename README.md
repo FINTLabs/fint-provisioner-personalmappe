@@ -8,6 +8,11 @@
   - [Adapter flow](#adapter-flow)
     - [On create](#on-create-1)
     - [On update](#on-update-1)
+- [Ecma transform policies](#ecma-transform-policies)
+  - [The transformation function](#the-transformation-function)
+    - [Examples](#examples)
+  - [Resource helper](#resource-helper)
+    - [Examples](#examples-1)
 - [Configuration](#configuration)
 
 This service provisions employee files in the archive system using FINT Core APIs.
@@ -38,6 +43,60 @@ case is put on a configured `administraiv enhet` and `saksbehandler`.
 ### On update
 ![flow-adapter-update](diagrams/flyt-adapter-update.png)
 
+# Ecma transform policies
+The service supports transform policies using Ecma script (Javascript) on the `Nashorn` engine.
+
+## The transformation function
+The transformation script needs to have this signature `function myTransformationFunc(object)`. The parameter is 
+a `PersonalmappeResource` object which one can modify. The transformation function must return this object.
+
+> You can access all the methods of the `PersonalmappeResource` object in the script.
+> E.g. `personalmappeResource.setTittel('new title)
+
+### Examples
+
+This example returns a unmodified object.
+```javascript
+function simpleTransform(o) {
+    return o;
+}
+``` 
+
+This example returns a object with the titles modified.
+```javascript
+function titleTransform(o) {
+    o.setTittel("New title");
+    o.setOffentligTittel("New title");
+    return o;
+}
+``` 
+
+## Resource helper
+We created a helper to make it easier to match and modify links. The `resource` helper takes the `PersonalmappeResource`
+object as a parameter. It has the following methods:
+
+* link(relation_name)
+* id(identifikator_name)
+* getLink()
+* getValue()
+* replaceValue()
+* is(value)
+* isNot(value)
+
+### Examples
+This example changes the `saksstatus` value to `E` if it is `B`.
+
+```javascript
+function transform(o) {
+    var r = resource(o).link("saksstatus");
+    if (r.is("B")) {
+        r.replaceValue("E");
+    }
+    return o;
+}
+``` 
+
+
 # Configuration
 > `orgId` should be replaced by the organisations orgId and the `.` should be replaced with a dash `-`. I.e. `viken.no` should be `viken-no`.
 
@@ -55,6 +114,7 @@ case is put on a configured `administraiv enhet` and `saksbehandler`.
 | fint.organisations.`<orgId>`.bulk-limit                                       | This is the number of `personalressurser` to synchronise on a load. If set to `0` all will be synchronised. Setting it to another value is meant for initial testing. | `5`                                                                    |
 | fint.organisations.`orgId>`.bulk                                              | `true` or `false`. If `true` bulk synchronisation is enabled.                                                                                                         | `false`                                                                |
 | fint.organisations.`<orgId>`.delta                                            | `true` or `false`. If `true` delta synchronisation is enabled.                                                                                                        | `false`                                                                 |
+| fint.organisations.`<orgId>`.transformation-scripts                           | Javascripts to transform `PersonalmappeResource` object before sent to the archive system. See [Ecma transform policies](#ecma-transform-policies)                    ||
 | fint.status-pending.fixed-backoff | Seconds to backoff on retries after creating/updating personalmappe. | 5 |
 | fint.status-pending.max-retry | Max retries on status endpoint after creating/updating personalmappe. | 2 |
 | spring.security.oauth2.client.registration.`<orgId>`.client-id                | `client-id` for API user from the customer portal.                                                                                                                    |                                                                        |
