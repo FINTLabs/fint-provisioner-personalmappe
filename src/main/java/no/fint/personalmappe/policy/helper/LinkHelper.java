@@ -3,6 +3,7 @@ package no.fint.personalmappe.policy.helper;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.exception.UnableToGetLink;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.function.Function;
 
@@ -36,15 +37,14 @@ public class LinkHelper {
                 .getLinks()
                 .get(property)
                 .stream()
-                .filter((link -> link.getHref().contains(identificator)))
+                .filter((link -> link.getHref().contains("/" + identificator + "/")))
                 .findFirst()
                 .orElseThrow(UnableToGetLink::new)
                 .getHref();
     }
 
     public String getValue() {
-        String url = getLink();
-        return url.substring(url.lastIndexOf("/") + 1);
+        return StringUtils.substringAfterLast(getLink(), "/");
     }
 
     public void replaceValue(String value) {
@@ -55,7 +55,7 @@ public class LinkHelper {
     }
 
     public boolean is(String value) {
-        return getValue().equals(value);
+        return StringUtils.equals(getValue(), value);
     }
 
     public boolean isNot(String value) {
