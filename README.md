@@ -51,7 +51,7 @@ The transformation script needs to have this signature `function myTransformatio
 a `PersonalmappeResource` object which one can modify. The transformation function must return this object.
 
 > You can access all the methods of the `PersonalmappeResource` object in the script.
-> E.g. `personalmappeResource.setTittel('new title)`
+> E.g. `personalmappeResource.setTittel('new title')`
 
 ### Examples
 
