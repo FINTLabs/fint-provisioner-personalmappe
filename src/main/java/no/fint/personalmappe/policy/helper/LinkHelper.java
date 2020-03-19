@@ -5,6 +5,7 @@ import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.exception.UnableToGetLink;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collections;
 import java.util.function.Function;
 
 public class LinkHelper {
@@ -35,7 +36,7 @@ public class LinkHelper {
     public String getLink() {
         return personalmappeResource
                 .getLinks()
-                .get(property)
+                .getOrDefault(property, Collections.emptyList())
                 .stream()
                 .filter((link -> link.getHref().contains("/" + identificator + "/")))
                 .findFirst()

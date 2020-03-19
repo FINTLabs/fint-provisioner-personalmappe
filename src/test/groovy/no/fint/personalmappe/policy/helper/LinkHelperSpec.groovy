@@ -2,6 +2,7 @@ package no.fint.personalmappe.policy.helper
 
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
 import no.fint.personalmappe.TestFactory
+import no.fint.personalmappe.exception.UnableToGetLink
 import spock.lang.Specification
 
 import static no.fint.personalmappe.policy.helper.LinkHelper.resource
@@ -12,6 +13,23 @@ class LinkHelperSpec extends Specification {
 
     void setup() {
         personalmappeResource = TestFactory.createPersonalmappeResource()
+    }
+
+    def "Get link should throw exception if not found"() {
+        when:
+        resource().apply(personalmappeResource).link("test").getLink()
+
+        then:
+        thrown(UnableToGetLink)
+    }
+
+    def "Get link should return the link"() {
+        when:
+        def link = resource().apply(personalmappeResource).link("saksstatus").getLink()
+
+        then:
+        link
+        link.contains("saksstatus")
     }
 
     def "Get identifikator value from link"() {
