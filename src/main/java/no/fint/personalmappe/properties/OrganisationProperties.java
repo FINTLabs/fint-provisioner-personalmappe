@@ -22,5 +22,6 @@ public class OrganisationProperties {
         private boolean bulk;
         private boolean delta;
         private List<String> personalressurskategori;
+        private List<String> transformationScripts;
     }
 }

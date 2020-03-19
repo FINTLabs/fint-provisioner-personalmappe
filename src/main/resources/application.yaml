@@ -22,6 +22,7 @@ fint:
             bulk-limit: 5
             bulk: false
             delta: false
+            transformation-scripts:
 spring:
     security:
         oauth2:

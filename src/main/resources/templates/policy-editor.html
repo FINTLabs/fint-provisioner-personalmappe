@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{editor/main.css}" href="editor/main.css" rel="stylesheet" type="text/css"/>
+    <title>Policy editor</title>
+</head>
+<body>
+<div>
+    <form
+            style="display: flex; flex-direction: column;"
+            action="#"
+            th:action="@{/policy/editor}"
+            th:object="${model}"
+            method="post"
+    >
+
+        <textarea class="prettyprint" rows="25" th:field="*{json}"></textarea>
+
+        <textarea class="prettyprint" rows="25" th:field="*{js}"></textarea>
+        <input type="submit" value="Evaluate"/>
+    </form>
+
+</div>
+<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+</body>
+</html>
