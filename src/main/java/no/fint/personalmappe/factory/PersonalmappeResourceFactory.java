@@ -14,15 +14,32 @@ import java.util.Optional;
 
 public final class PersonalmappeResourceFactory {
 
-    private PersonalmappeResourceFactory() {}
+    private PersonalmappeResourceFactory() {
+    }
 
     public static PersonalmappeResource toPersonalmappeResource(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
         PersonalmappeResource resource = new PersonalmappeResource();
-        getPersonalressurs(arbeidsforhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(resource::addPersonalressurs);
+
         getPerson(arbeidsforhold).ifPresent(resource::addPerson);
         getNavn(arbeidsforhold).ifPresent(resource::setNavn);
-        getArbeidssted(arbeidsforhold).ifPresent(resource::addArbeidssted);
-        Optional.ofNullable(getLeder(arbeidsforhold)).ifPresent(resource::addLeder);
+
+        getPersonalressurs(arbeidsforhold).ifPresent(personalressurs -> {
+
+            resource.addPersonalressurs(Link.with(Personalressurs.class, "brukernavn", personalressurs));
+
+            getLeder(arbeidsforhold).ifPresent(leder -> {
+
+                if (personalressurs.equalsIgnoreCase(leder)) {
+                    getLedersLeder(arbeidsforhold).ifPresent(resource::addLeder);
+                    getLedersArbeidssted(arbeidsforhold).ifPresent(resource::addArbeidssted);
+
+                } else {
+                    resource.addLeder(Link.with(Personalressurs.class, "brukernavn", leder));
+                    getArbeidssted(arbeidsforhold).ifPresent(resource::addArbeidssted);
+                }
+            });
+        });
+
         resource.setPart(Collections.singletonList(new PartsinformasjonResource()));
         resource.setTittel("DUMMY");
         return resource;
@@ -55,6 +72,13 @@ public final class PersonalmappeResourceFactory {
                 });
     }
 
+    private static Optional<String> getLeder(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
+        return Optional.ofNullable(arbeidsforhold.getArbeidssted())
+                .map(GraphQLPersonalmappe.Organisasjonselement::getLeder)
+                .map(GraphQLPersonalmappe.Personalressurs::getBrukernavn)
+                .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi);
+    }
+
     private static Optional<Link> getArbeidssted(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
         return Optional.ofNullable(arbeidsforhold.getArbeidssted())
                 .map(GraphQLPersonalmappe.Organisasjonselement::getOrganisasjonsId)
@@ -62,23 +86,20 @@ public final class PersonalmappeResourceFactory {
                 .map(Link.apply(Organisasjonselement.class, "organisasjonsid"));
     }
 
-    private static Link getLeder(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
-        return Optional.ofNullable(arbeidsforhold.getArbeidssted())
-                .map(GraphQLPersonalmappe.Organisasjonselement::getLeder)
-                .map(GraphQLPersonalmappe.Personalressurs::getBrukernavn)
-                .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
-                .filter(username -> !username.equalsIgnoreCase(getPersonalressurs(arbeidsforhold).orElse(null)))
-                .map(Link.apply(Personalressurs.class, "brukernavn"))
-                .orElseGet(() -> getLedersLeder(arbeidsforhold));
-    }
-
-    private static Link getLedersLeder(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
+    private static Optional<Link> getLedersLeder(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
         return Optional.ofNullable(arbeidsforhold.getArbeidssted())
                 .map(GraphQLPersonalmappe.Organisasjonselement::getOverordnet)
                 .map(GraphQLPersonalmappe.Organisasjonselement::getLeder)
                 .map(GraphQLPersonalmappe.Personalressurs::getBrukernavn)
                 .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
-                .map(Link.apply(Personalressurs.class, "brukernavn"))
-                .orElse(null);
+                .map(Link.apply(Personalressurs.class, "brukernavn"));
+    }
+
+    private static Optional<Link> getLedersArbeidssted(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
+        return Optional.ofNullable(arbeidsforhold.getArbeidssted())
+                .map(GraphQLPersonalmappe.Organisasjonselement::getOverordnet)
+                .map(GraphQLPersonalmappe.Organisasjonselement::getOrganisasjonsId)
+                .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
+                .map(Link.apply(Organisasjonselement.class, "organisasjonsid"));
     }
 }
