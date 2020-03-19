@@ -40,6 +40,8 @@ public class ProvisionService {
     @Value("${fint.endpoints.graphql}")
     private URI graphqlEndpoint;
 
+    private static final String GRAPH_QL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
+
     private final FintRepository fintRepository;
     private final MongoDBRepository mongoDBRepository;
     private final ResponseHandlerService responseHandlerService;
@@ -59,28 +61,25 @@ public class ProvisionService {
                 .blockOptional()
                 .orElseGet(Collections::emptyList)
                 .stream()
-                .sorted(Comparator.comparing(resource -> Optional.ofNullable(resource.getBrukernavn())
-                        .map(Identifikator::getIdentifikatorverdi)
-                        .filter(StringUtils::isAlpha)
-                        .orElse("ZZZ")))
                 .map(PersonalressursResource::getBrukernavn)
                 .filter(Objects::nonNull)
                 .map(Identifikator::getIdentifikatorverdi)
+                .sorted()
                 .collect(Collectors.toList());
 
         log.trace("Start provisioning {} of {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
+
         usernames.parallelStream()
                 .limit(limit == 0 ? usernames.size() : limit)
                 .map(username -> getPersonalmappeResource(orgId, username))
                 .filter(Objects::nonNull)
                 .forEach(personalmappeResource -> provision(orgId, personalmappeResource));
+        
         log.trace("End provisioning");
     }
 
     public PersonalmappeResource getPersonalmappeResource(String orgId, String username) {
-        GraphQLQuery graphQLQuery = new GraphQLQuery();
-        graphQLQuery.setQuery(GraphQLUtilities.getGraphQLQuery("personalressurs.graphql"));
-        graphQLQuery.setVariables(Collections.singletonMap("brukernavn", username));
+        GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPH_QL_QUERY, Collections.singletonMap("brukernavn", username));
 
         List<PersonalmappeResource> personalmappeResources =
                 fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
@@ -100,7 +99,9 @@ public class ProvisionService {
         if (personalmappeResources.size() == 1) {
             PersonalmappeResource personalmappeResource = personalmappeResources.get(0);
 
-            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
+            if (personalmappeResource.getPersonalressurs().contains(
+                    personalmappeResource.getLeder().stream().findAny().orElse(null))) {
+
                 log.trace("Identical subject and leader for personalmappe: {}", getUsername(personalmappeResource));
                 return null;
             }
