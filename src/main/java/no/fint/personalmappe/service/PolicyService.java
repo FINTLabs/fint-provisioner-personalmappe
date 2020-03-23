@@ -28,6 +28,7 @@ public class PolicyService {
         try {
             engine.eval(policy);
 
+            log.info("Running transform policy: {}", getFunctionName(policy));
             Object o = ((Invocable) engine).invokeFunction(getFunctionName(policy), personalmappeResource);
             return (PersonalmappeResource) o;
         } catch (ScriptException | NoSuchMethodException e) {
