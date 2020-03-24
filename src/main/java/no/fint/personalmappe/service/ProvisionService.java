@@ -3,6 +3,8 @@ package no.fint.personalmappe.service;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.Link;
+import no.fint.model.resource.administrasjon.arkiv.AdministrativEnhetResource;
+import no.fint.model.resource.administrasjon.arkiv.AdministrativEnhetResources;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
@@ -18,6 +20,8 @@ import no.fint.personalmappe.utilities.NINUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
@@ -34,10 +38,15 @@ public class ProvisionService {
     @Value("${fint.endpoints.personalmappe}")
     private URI personalmappeEndpoint;
 
+    @Value("${fint.endpoints.administrativ-enhet}")
+    private URI administrativEnhetEndpoint;
+
     @Value("${fint.endpoints.graphql}")
     private URI graphqlEndpoint;
 
-    private static final String GRAPH_QL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
+    private static final String GRAPHQL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
+
+    private MultiValueMap<String, String> administrativeEnheter = new LinkedMultiValueMap<>();
 
     private final FintRepository fintRepository;
     private final MongoDBRepository mongoDBRepository;
@@ -54,6 +63,10 @@ public class ProvisionService {
     }
 
     public void provisionByOrgId(String orgId, int limit, Mono<PersonalressursResources> personalressursResources) {
+        if (administrativeEnheter.getOrDefault(orgId, Collections.emptyList()).isEmpty()) {
+            updateAdministrativeEnheter(orgId);
+        }
+
         List<String> usernames = personalressursResources
                 .flatMapIterable(PersonalressursResources::getContent)
                 .collectList()
@@ -73,12 +86,12 @@ public class ProvisionService {
                 .map(username -> getPersonalmappeResource(orgId, username))
                 .filter(Objects::nonNull)
                 .forEach(personalmappeResource -> provision(orgId, personalmappeResource));
-        
+
         log.trace("End provisioning");
     }
 
     public PersonalmappeResource getPersonalmappeResource(String orgId, String username) {
-        GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPH_QL_QUERY, Collections.singletonMap("brukernavn", username));
+        GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPHQL_QUERY, Collections.singletonMap("brukernavn", username));
 
         List<PersonalmappeResource> personalmappeResources =
                 fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
@@ -89,8 +102,17 @@ public class ProvisionService {
                         .orElseGet(Collections::emptyList)
                         .stream()
                         .filter(isActive(LocalDateTime.now()).and(isHovedstilling().and(hasPersonalressurskategori(orgId))))
-                        .map(PersonalmappeResourceFactory::toPersonalmappeResource)
-                        .filter(hasMandatoryFieldsAndRelations())
+                        .map(arbeidsforhold -> Optional.ofNullable(arbeidsforhold.getArbeidssted())
+                                .map(GraphQLPersonalmappe.Organisasjonselement::getOrganisasjonsId)
+                                .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
+                                .map(id -> {
+                                    if (getAdministrativeEnheter(orgId).contains(id)) {
+                                        return PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, true);
+                                    } else {
+                                        return PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, false);
+                                    }
+                                }).orElse(null))
+                        .filter(hasMandatoryFieldsAndRelations().and(Objects::nonNull))
                         .collect(Collectors.toList());
 
         log.trace("{} {}", username, personalmappeResources.size());
@@ -215,5 +237,21 @@ public class ProvisionService {
                 .map(href -> StringUtils.substringAfterLast(href, "/"))
                 .findAny()
                 .orElse(null);
+    }
+
+    public List<String> getAdministrativeEnheter(String orgId) {
+        return administrativeEnheter.getOrDefault(orgId, Collections.emptyList());
+    }
+
+    public void updateAdministrativeEnheter(String orgId) {
+        if (administrativeEnheter.containsKey(orgId)) {
+            administrativeEnheter.get(orgId).clear();
+        }
+
+        fintRepository.get(orgId, AdministrativEnhetResources.class, administrativEnhetEndpoint)
+                .flatMapIterable(AdministrativEnhetResources::getContent)
+                .map(AdministrativEnhetResource::getSystemId)
+                .map(Identifikator::getIdentifikatorverdi)
+                .subscribe(id -> administrativeEnheter.add(orgId, id));
     }
 }
