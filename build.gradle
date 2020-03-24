@@ -36,6 +36,9 @@ dependencies {
 
 	implementation 'com.github.springfox.loader:springfox-loader:2.0.0'
 
+	implementation 'com.azure:azure-storage-blob:12.4.0'
+
+
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: provisioner-personalmappe
-          image: fintlabs.azurecr.io/provisioner-personalmappe:build.43
+          image: fintlabs.azurecr.io/provisioner-personalmappe:PR-7.1
           resources:
             limits:
               memory: "2Gi"
@@ -88,15 +88,4 @@ spec:
               value: "false"
             - name: fint.organisations.viken-no.bulk-limit
               value: "0"
-            - name: fint.organisations.viken-no.transformation-scripts
-              value: >-
-                function arbeidsted11Transform(o) {
-                    var arbeidssted = resource(o).link("arbeidssted");
-                    var leder = resource(o).link("leder").id("brukernavn");
-                    if (arbeidssted.is("11")) {
-                        arbeidssted.replaceValue("21");
-                        leder.replaceValue("KJERSTIS");
-                    }
-                    return o;
-                }
 
