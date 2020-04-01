@@ -4,6 +4,7 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobItem;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.personalmappe.policy.model.TransformationPolicy;
 import no.fint.personalmappe.properties.OrganisationProperties;
@@ -29,20 +30,19 @@ public class PolicyRepository {
     @Value(("${fint.azure.storage.container:fint-personalmappe-policies}"))
     private String azureStorageContainer;
 
-    private BlobServiceClient blobServiceClient;
-    private BlobContainerClient blobContainerClient;
-
+    @Getter
     private Map<String, List<TransformationPolicy>> policyMap = new HashMap<>();
+
+    private BlobContainerClient blobContainerClient;
     private final OrganisationProperties organisationProperties;
 
     public PolicyRepository(OrganisationProperties organisationProperties) {
         this.organisationProperties = organisationProperties;
     }
 
-
     @PostConstruct
     public void init() {
-        blobServiceClient = new BlobServiceClientBuilder().connectionString(azureStorageConnectionString).buildClient();
+        BlobServiceClient blobServiceClient = new BlobServiceClientBuilder().connectionString(azureStorageConnectionString).buildClient();
         blobContainerClient = blobServiceClient.getBlobContainerClient(azureStorageContainer);
     }
 

@@ -98,8 +98,7 @@ public class ProvisionService {
         if (personalmappeResources.size() == 1) {
             PersonalmappeResource personalmappeResource = personalmappeResources.get(0);
 
-            if (personalmappeResource.getPersonalressurs().contains(
-                    personalmappeResource.getLeder().stream().findAny().orElse(null))) {
+            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
 
                 log.trace("Identical subject and leader for personalmappe: {}", getUsername(personalmappeResource));
                 return null;
