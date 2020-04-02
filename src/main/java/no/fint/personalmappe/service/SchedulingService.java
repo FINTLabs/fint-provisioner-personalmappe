@@ -34,7 +34,6 @@ public class SchedulingService {
                     OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
                     if (props.isBulk()) {
                         log.trace("Bulking personalmapper for {}", orgId);
-                        provisionService.updateAdministrativeEnheter(orgId);
                         provisionService.provisionByOrgId(orgId, props.getBulkLimit(), fintRepository.get(orgId, PersonalressursResources.class, personalressursEndpoint));
                     } else {
                         log.trace("Bulk is disabled for {}", orgId);

@@ -1,5 +1,8 @@
 package no.fint.personalmappe.configuration;
 
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ClientHttpConnector;
@@ -68,7 +71,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Bean
     public ClientHttpConnector clientHttpConnector() {
-        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
+        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection())
+                .tcpConfiguration(client ->
+                        client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                                .doOnConnected(conn -> conn
+                                        .addHandlerLast(new ReadTimeoutHandler(30))
+                                        .addHandlerLast(new WriteTimeoutHandler(30)))
+                ));
     }
 
     @Bean
