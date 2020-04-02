@@ -75,8 +75,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .tcpConfiguration(client ->
                         client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                                 .doOnConnected(conn -> conn
-                                        .addHandlerLast(new ReadTimeoutHandler(30))
-                                        .addHandlerLast(new WriteTimeoutHandler(30)))
+                                        .addHandlerLast(new ReadTimeoutHandler(60))
+                                        .addHandlerLast(new WriteTimeoutHandler(60)))
                 ));
     }
 
