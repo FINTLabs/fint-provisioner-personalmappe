@@ -77,7 +77,7 @@ public class ProvisionService {
                 .map(PersonalressursResource::getBrukernavn)
                 .filter(Objects::nonNull)
                 .map(Identifikator::getIdentifikatorverdi)
-                .sorted(Comparator.naturalOrder())
+                .sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
 
         log.trace("Start provisioning {} of {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
