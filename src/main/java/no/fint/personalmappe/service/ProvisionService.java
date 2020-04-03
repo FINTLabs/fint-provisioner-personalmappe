@@ -93,6 +93,7 @@ public class ProvisionService {
 
         return fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
                 .timeout(Duration.ofSeconds(60), Mono.empty())
+                .onErrorResume(it -> Mono.empty())
                 .map(GraphQLPersonalmappe::getResult)
                 .map(GraphQLPersonalmappe.Result::getPersonalressurs)
                 .flatMapIterable(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
@@ -116,10 +117,10 @@ public class ProvisionService {
 
                             return personalmappeResource;
                         }).orElse(null))
-                .doOnEach(personalmappeResource -> log.trace("{} - {}", username, personalmappeResource.hasValue()))
                 .filter(Objects::nonNull)
                 .filter(hasMandatoryFieldsAndRelations())
-                .singleOrEmpty();
+                .singleOrEmpty()
+                .doOnNext(it -> log.trace(username));
     }
 
     public void provision(String orgId, PersonalmappeResource personalmappeResource) {
