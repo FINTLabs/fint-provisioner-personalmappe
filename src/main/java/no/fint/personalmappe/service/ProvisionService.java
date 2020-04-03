@@ -112,12 +112,12 @@ public class ProvisionService {
 
                             if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
                                 log.trace("Identical subject and leader for personalmappe: {}", getUsername(personalmappeResource));
-                                return null;
+                                personalmappeResource = null;
                             }
 
                             return personalmappeResource;
-                        }).orElse(null))
-                .filter(Objects::nonNull)
+
+                        }).orElseGet(PersonalmappeResource::new))
                 .filter(hasMandatoryFieldsAndRelations())
                 .singleOrEmpty()
                 .doOnNext(it -> log.trace(username));
