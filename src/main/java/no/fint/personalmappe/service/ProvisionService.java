@@ -97,6 +97,7 @@ public class ProvisionService {
                 .map(GraphQLPersonalmappe::getResult)
                 .map(GraphQLPersonalmappe.Result::getPersonalressurs)
                 .flatMapIterable(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
+                .onErrorResume(it -> Flux.empty())
                 .filter(isActive(LocalDateTime.now()).and(isHovedstilling().and(hasPersonalressurskategori(orgId))))
                 .map(arbeidsforhold -> Optional.ofNullable(arbeidsforhold.getArbeidssted())
                         .map(GraphQLPersonalmappe.Organisasjonselement::getOrganisasjonsId)
