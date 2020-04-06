@@ -81,8 +81,9 @@ public class ProvisionService {
                 .collect(Collectors.toList());
 
         log.trace("Start provisioning {} of {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
-
+        
         Flux.fromIterable(usernames)
+                .limitRequest(limit)
                 .delayElements(Duration.ofMillis(500))
                 .flatMap(username -> getPersonalmappeResource(orgId, username))
                 .subscribe(personalmappeResource -> provision(orgId, personalmappeResource));
