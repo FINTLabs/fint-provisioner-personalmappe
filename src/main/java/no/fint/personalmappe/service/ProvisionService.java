@@ -83,7 +83,7 @@ public class ProvisionService {
         log.trace("Start provisioning {} of {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
         
         Flux.fromIterable(usernames)
-                .limitRequest(limit)
+                .limitRequest(limit == 0 ? usernames.size() : limit)
                 .delayElements(Duration.ofMillis(500))
                 .flatMap(username -> getPersonalmappeResource(orgId, username))
                 .subscribe(personalmappeResource -> provision(orgId, personalmappeResource));
@@ -106,7 +106,7 @@ public class ProvisionService {
                         .map(id -> {
                             PersonalmappeResource personalmappeResource;
 
-                            if (getAdministrativeEnheter(orgId).contains(id)) {
+                            if (administrativeEnheter.get(orgId).contains(id)) {
                                 personalmappeResource = PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, true);
                             } else {
                                 personalmappeResource = PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, false);
@@ -227,10 +227,6 @@ public class ProvisionService {
                 .map(href -> StringUtils.substringAfterLast(href, "/"))
                 .findAny()
                 .orElse(null);
-    }
-
-    public List<String> getAdministrativeEnheter(String orgId) {
-        return administrativeEnheter.getOrDefault(orgId, Collections.emptyList());
     }
 
     public void updateAdministrativeEnheter(String orgId) {
