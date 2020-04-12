@@ -72,6 +72,14 @@ class ProvisionServiceSpec extends Specification {
         valid
     }
 
+    def "hasValidLeader() returns true when subject and leader is not equal"() {
+        when:
+        def valid = provisionService.hasValidLeader().test(getPersonalmappeResource())
+
+        then:
+        valid
+    }
+
     GraphQLPersonalmappe getGraphQLPersonalmappe() {
         return new GraphQLPersonalmappe(
                 result: new GraphQLPersonalmappe.Result(

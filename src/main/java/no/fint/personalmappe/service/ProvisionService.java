@@ -48,7 +48,7 @@ public class ProvisionService {
 
     private static final String GRAPHQL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
 
-    private MultiValueMap<String, String> administrativeEnheter = new LinkedMultiValueMap<>();
+    private final MultiValueMap<String, String> administrativeEnheter = new LinkedMultiValueMap<>();
 
     private final FintRepository fintRepository;
     private final MongoDBRepository mongoDBRepository;
@@ -70,10 +70,8 @@ public class ProvisionService {
         }
 
         List<String> usernames = personalressursResources
-                .blockOptional()
-                .map(PersonalressursResources::getContent)
-                .orElseGet(Collections::emptyList)
-                .stream()
+                .flatMapIterable(PersonalressursResources::getContent)
+                .toStream()
                 .map(PersonalressursResource::getBrukernavn)
                 .filter(Objects::nonNull)
                 .map(Identifikator::getIdentifikatorverdi)
@@ -81,7 +79,7 @@ public class ProvisionService {
                 .collect(Collectors.toList());
 
         log.trace("Start provisioning {} of {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
-        
+
         Flux.fromIterable(usernames)
                 .limitRequest(limit == 0 ? usernames.size() : limit)
                 .delayElements(Duration.ofMillis(500))
@@ -93,34 +91,26 @@ public class ProvisionService {
         GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPHQL_QUERY, Collections.singletonMap("brukernavn", username));
 
         return fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
-                .timeout(Duration.ofSeconds(60), Mono.empty())
-                .onErrorResume(it -> Mono.empty())
+                .timeout(Duration.ofSeconds(60))
+                .onErrorResume(error -> {
+                    log.error("{} - {}", username, error.getMessage());
+                    return Mono.empty();
+                })
                 .map(GraphQLPersonalmappe::getResult)
                 .map(GraphQLPersonalmappe.Result::getPersonalressurs)
                 .flatMapIterable(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
-                .onErrorResume(it -> Flux.empty())
-                .filter(isActive(LocalDateTime.now()).and(isHovedstilling().and(hasPersonalressurskategori(orgId))))
-                .map(arbeidsforhold -> Optional.ofNullable(arbeidsforhold.getArbeidssted())
+                .onErrorResume(error -> {
+                    log.error("{} {}", username, error.getMessage());
+                    return Flux.empty();
+                })
+                .filter(isActive(LocalDateTime.now()).and(isHovedstilling()).and(hasPersonalressurskategori(orgId)))
+                .map(arbeidsforhold -> Optional.ofNullable(arbeidsforhold)
+                        .map(GraphQLPersonalmappe.Arbeidsforhold::getArbeidssted)
                         .map(GraphQLPersonalmappe.Organisasjonselement::getOrganisasjonsId)
                         .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
-                        .map(id -> {
-                            PersonalmappeResource personalmappeResource;
-
-                            if (administrativeEnheter.get(orgId).contains(id)) {
-                                personalmappeResource = PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, true);
-                            } else {
-                                personalmappeResource = PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, false);
-                            }
-
-                            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
-                                log.trace("Identical subject and leader for personalmappe: {}", getUsername(personalmappeResource));
-                                personalmappeResource = null;
-                            }
-
-                            return personalmappeResource;
-
-                        }).orElseGet(PersonalmappeResource::new))
-                .filter(hasMandatoryFieldsAndRelations())
+                        .map(id -> PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, administrativeEnheter.get(orgId).contains(id)))
+                        .orElseGet(PersonalmappeResource::new))
+                .filter(hasMandatoryFieldsAndRelations().and(hasValidLeader()))
                 .singleOrEmpty()
                 .doOnNext(it -> log.trace(username));
     }
@@ -221,6 +211,16 @@ public class ProvisionService {
                 && Objects.nonNull(personalmappeResource.getNavn()));
     }
 
+    public Predicate<PersonalmappeResource> hasValidLeader() {
+        return personalmappeResource -> {
+            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
+                log.trace("Identical subject and leader for personalmappe: {}", getUsername(personalmappeResource));
+                return false;
+            }
+            return true;
+        };
+    }
+
     private String getUsername(PersonalmappeResource personalmappeResource) {
         return personalmappeResource.getPersonalressurs().stream()
                 .map(Link::getHref)
@@ -235,10 +235,8 @@ public class ProvisionService {
         }
 
         fintRepository.get(orgId, AdministrativEnhetResources.class, administrativEnhetEndpoint)
-                .blockOptional()
-                .map(AdministrativEnhetResources::getContent)
-                .orElseGet(Collections::emptyList)
-                .stream()
+                .flatMapIterable(AdministrativEnhetResources::getContent)
+                .toStream()
                 .map(AdministrativEnhetResource::getSystemId)
                 .map(Identifikator::getIdentifikatorverdi)
                 .forEach(id -> administrativeEnheter.add(orgId, id));
