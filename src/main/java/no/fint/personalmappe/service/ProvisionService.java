@@ -23,9 +23,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -46,7 +48,7 @@ public class ProvisionService {
 
     private static final String GRAPHQL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
 
-    private MultiValueMap<String, String> administrativeEnheter = new LinkedMultiValueMap<>();
+    private final MultiValueMap<String, String> administrativeEnheter = new LinkedMultiValueMap<>();
 
     private final FintRepository fintRepository;
     private final MongoDBRepository mongoDBRepository;
@@ -69,68 +71,48 @@ public class ProvisionService {
 
         List<String> usernames = personalressursResources
                 .flatMapIterable(PersonalressursResources::getContent)
-                .collectList()
-                .blockOptional()
-                .orElseGet(Collections::emptyList)
-                .stream()
+                .toStream()
                 .map(PersonalressursResource::getBrukernavn)
                 .filter(Objects::nonNull)
                 .map(Identifikator::getIdentifikatorverdi)
-                .sorted()
+                .sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
 
         log.trace("Start provisioning {} of {} users", (limit == 0 ? usernames.size() : limit), usernames.size());
 
-        usernames.parallelStream()
-                .limit(limit == 0 ? usernames.size() : limit)
-                .map(username -> getPersonalmappeResource(orgId, username))
-                .filter(Objects::nonNull)
-                .forEach(personalmappeResource -> provision(orgId, personalmappeResource));
-
-        log.trace("End provisioning");
+        Flux.fromIterable(usernames)
+                .limitRequest(limit == 0 ? usernames.size() : limit)
+                .delayElements(Duration.ofMillis(500))
+                .flatMap(username -> getPersonalmappeResource(orgId, username))
+                .subscribe(personalmappeResource -> provision(orgId, personalmappeResource));
     }
 
-    public PersonalmappeResource getPersonalmappeResource(String orgId, String username) {
+    public Mono<PersonalmappeResource> getPersonalmappeResource(String orgId, String username) {
         GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPHQL_QUERY, Collections.singletonMap("brukernavn", username));
 
-        List<PersonalmappeResource> personalmappeResources =
-                fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
-                        .blockOptional()
-                        .map(GraphQLPersonalmappe::getResult)
-                        .map(GraphQLPersonalmappe.Result::getPersonalressurs)
-                        .map(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
-                        .orElseGet(Collections::emptyList)
-                        .stream()
-                        .filter(isActive(LocalDateTime.now()).and(isHovedstilling().and(hasPersonalressurskategori(orgId))))
-                        .map(arbeidsforhold -> Optional.ofNullable(arbeidsforhold.getArbeidssted())
-                                .map(GraphQLPersonalmappe.Organisasjonselement::getOrganisasjonsId)
-                                .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
-                                .map(id -> {
-                                    if (getAdministrativeEnheter(orgId).contains(id)) {
-                                        return PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, true);
-                                    } else {
-                                        return PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, false);
-                                    }
-                                }).orElse(null))
-                        .filter(hasMandatoryFieldsAndRelations().and(Objects::nonNull))
-                        .collect(Collectors.toList());
-
-        log.trace("{} {}", username, personalmappeResources.size());
-
-        if (personalmappeResources.size() == 1) {
-            PersonalmappeResource personalmappeResource = personalmappeResources.get(0);
-
-            if (personalmappeResource.getPersonalressurs().contains(
-                    personalmappeResource.getLeder().stream().findAny().orElse(null))) {
-
-                log.trace("Identical subject and leader for personalmappe: {}", getUsername(personalmappeResource));
-                return null;
-            }
-
-            return personalmappeResource;
-        }
-
-        return null;
+        return fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
+                .timeout(Duration.ofSeconds(60))
+                .onErrorResume(error -> {
+                    log.error("{} - {}", username, error.getMessage());
+                    return Mono.empty();
+                })
+                .map(GraphQLPersonalmappe::getResult)
+                .map(GraphQLPersonalmappe.Result::getPersonalressurs)
+                .flatMapIterable(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
+                .onErrorResume(error -> {
+                    log.error("{} {}", username, error.getMessage());
+                    return Flux.empty();
+                })
+                .filter(isActive(LocalDateTime.now()).and(isHovedstilling()).and(hasPersonalressurskategori(orgId)))
+                .map(arbeidsforhold -> Optional.ofNullable(arbeidsforhold)
+                        .map(GraphQLPersonalmappe.Arbeidsforhold::getArbeidssted)
+                        .map(GraphQLPersonalmappe.Organisasjonselement::getOrganisasjonsId)
+                        .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi)
+                        .map(id -> PersonalmappeResourceFactory.toPersonalmappeResource(arbeidsforhold, administrativeEnheter.get(orgId).contains(id)))
+                        .orElseGet(PersonalmappeResource::new))
+                .filter(hasMandatoryFieldsAndRelations().and(hasValidLeader()))
+                .singleOrEmpty()
+                .doOnNext(it -> log.trace(username));
     }
 
     public void provision(String orgId, PersonalmappeResource personalmappeResource) {
@@ -152,9 +134,7 @@ public class ProvisionService {
     }
 
     public void doTransformation(String orgId, PersonalmappeResource personalmappeResource) {
-        organisationProperties.getOrganisations().get(orgId).getTransformationScripts().forEach(script -> {
-            policyService.transform(script, personalmappeResource);
-        });
+        organisationProperties.getOrganisations().get(orgId).getTransformationScripts().forEach(script -> policyService.transform(script, personalmappeResource));
     }
 
     private void onCreate(String orgId, PersonalmappeResource personalmappeResource, String id, String username) {
@@ -164,7 +144,7 @@ public class ProvisionService {
                     MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.handleStatusOnNew(orgId, id, username);
                     getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
                 })
-                .block();
+                .subscribe();
     }
 
     private void onFailedCreate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
@@ -173,7 +153,7 @@ public class ProvisionService {
                     responseHandlerService.handleStatus(mongoDBPersonalmappe);
                     getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
                 })
-                .block();
+                .subscribe();
     }
 
     private void onUpdate(String orgId, PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
@@ -183,7 +163,7 @@ public class ProvisionService {
                     responseHandlerService.handleStatus(mongoDBPersonalmappe);
                     getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
                 })
-                .block();
+                .subscribe();
     }
 
     private void getForResource(MongoDBPersonalmappe mongoDBPersonalmappe, URI location) {
@@ -231,16 +211,22 @@ public class ProvisionService {
                 && Objects.nonNull(personalmappeResource.getNavn()));
     }
 
+    public Predicate<PersonalmappeResource> hasValidLeader() {
+        return personalmappeResource -> {
+            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
+                log.trace("Identical subject and leader for personalmappe: {}", getUsername(personalmappeResource));
+                return false;
+            }
+            return true;
+        };
+    }
+
     private String getUsername(PersonalmappeResource personalmappeResource) {
         return personalmappeResource.getPersonalressurs().stream()
                 .map(Link::getHref)
                 .map(href -> StringUtils.substringAfterLast(href, "/"))
                 .findAny()
                 .orElse(null);
-    }
-
-    public List<String> getAdministrativeEnheter(String orgId) {
-        return administrativeEnheter.getOrDefault(orgId, Collections.emptyList());
     }
 
     public void updateAdministrativeEnheter(String orgId) {
@@ -250,8 +236,9 @@ public class ProvisionService {
 
         fintRepository.get(orgId, AdministrativEnhetResources.class, administrativEnhetEndpoint)
                 .flatMapIterable(AdministrativEnhetResources::getContent)
+                .toStream()
                 .map(AdministrativEnhetResource::getSystemId)
                 .map(Identifikator::getIdentifikatorverdi)
-                .subscribe(id -> administrativeEnheter.add(orgId, id));
+                .forEach(id -> administrativeEnheter.add(orgId, id));
     }
 }

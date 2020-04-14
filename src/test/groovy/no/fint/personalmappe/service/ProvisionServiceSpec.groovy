@@ -36,8 +36,6 @@ class ProvisionServiceSpec extends Specification {
 
         then:
         1 * fintRepository.post(_ as String, GraphQLPersonalmappe.class, _, _) >> Mono.just(getGraphQLPersonalmappe())
-        1 * organisationProperties.getOrganisations() >> [(_ as String): new OrganisationProperties.Organisation(
-                username: _ as String, password: _ as String, registration: _ as String, personalressurskategori: ['F'])]
     }
 
     def "isActive() returns true when now is within gyldighetsperiode"() {
@@ -69,6 +67,14 @@ class ProvisionServiceSpec extends Specification {
     def "hasMandatoryFieldsAndRelations() returns true when all mandatory fields and relations are present"() {
         when:
         def valid = provisionService.hasMandatoryFieldsAndRelations().test(getPersonalmappeResource())
+
+        then:
+        valid
+    }
+
+    def "hasValidLeader() returns true when subject and leader is not equal"() {
+        when:
+        def valid = provisionService.hasValidLeader().test(getPersonalmappeResource())
 
         then:
         valid

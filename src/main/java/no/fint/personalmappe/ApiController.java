@@ -61,7 +61,7 @@ public class ApiController {
 
     @GetMapping("/provisioning/username/{username}")
     public PersonalmappeResource getPersonalmappeResourceAbleToBeProvisioned(@RequestHeader("x-orgid") String orgId, @PathVariable String username) {
-        return provisionService.getPersonalmappeResource(orgId, username);
+        return provisionService.getPersonalmappeResource(orgId, username).block();
     }
 
     @PostMapping("/provisioning/username/{username}")
