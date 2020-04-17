@@ -59,8 +59,9 @@ public class ApiController {
         return ResponseEntity.ok(new ArrayList<>(organisationProperties.getOrganisations().keySet()));
     }
 
-    public PersonalmappeResource getPersonalmappeResourceAbleToBeProvisioned(String orgId, String username) {
-        return provisionService.getPersonalmappeResource(orgId, username);
+    @GetMapping("/provisioning/username/{username}")
+    public PersonalmappeResource getPersonalmappeResourceAbleToBeProvisioned(@RequestHeader("x-orgid") String orgId, @PathVariable String username) {
+        return provisionService.getPersonalmappeResource(orgId, username).block();
     }
 
     @PostMapping("/provisioning/username/{username}")

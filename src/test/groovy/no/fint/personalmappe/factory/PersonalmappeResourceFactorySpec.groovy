@@ -4,6 +4,7 @@ import no.fint.model.administrasjon.organisasjon.Organisasjonselement
 import no.fint.model.administrasjon.personal.Personalressurs
 import no.fint.model.resource.Link
 import no.fint.personalmappe.model.GraphQLPersonalmappe
+import no.fint.personalmappe.service.ProvisionService
 import spock.lang.Specification
 
 import java.time.LocalDateTime
@@ -12,16 +13,25 @@ class PersonalmappeResourceFactorySpec extends Specification {
 
     def "return PersonalmappeResource given GraphQLPersonalmappe"() {
         when:
-        def resource = PersonalmappeResourceFactory.toPersonalmappeResource(getArbeidsforhold('brukernavn'))
+        def resource = PersonalmappeResourceFactory.toPersonalmappeResource(getArbeidsforhold('brukernavn'), true)
 
         then:
         resource.getArbeidssted().first() == Link.with(Organisasjonselement.class, "organisasjonsid", "arbeidssted")
         resource.getLeder().first() == Link.with(Personalressurs.class, "brukernavn", "brukernavn-leder")
     }
 
+    def "return PersonalmappeResource given GraphQLPersonalmappe and administrativ enhet is non-existent"() {
+        when:
+        def resource = PersonalmappeResourceFactory.toPersonalmappeResource(getArbeidsforhold('brukernavn'), false)
+
+        then:
+        resource.getArbeidssted().first() == Link.with(Organisasjonselement.class, "organisasjonsid", "arbeidssted-leder")
+        resource.getLeder().first() == Link.with(Personalressurs.class, "brukernavn", "brukernavn-leder-leder")
+    }
+
     def "return PersonalmappeResource given GraphQLPersonalmappe and leders leder and arbeidssted if personalressurs is leder"() {
         when:
-        def resource = PersonalmappeResourceFactory.toPersonalmappeResource(getArbeidsforhold('brukernavn-leder'))
+        def resource = PersonalmappeResourceFactory.toPersonalmappeResource(getArbeidsforhold('brukernavn-leder'), true)
 
         then:
         resource.getArbeidssted().first() == Link.with(Organisasjonselement.class, "organisasjonsid", "arbeidssted-leder")

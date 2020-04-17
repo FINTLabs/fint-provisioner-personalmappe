@@ -6,6 +6,7 @@ fint:
     endpoints:
         personalressurs: https://api.felleskomponent.no/administrasjon/personal/personalressurs
         #personalmappe: https://alpha.felleskomponent.no/administrasjon/personal/personalmappe
+        administrativ-enhet: https://alpha.felleskomponent.no/administrasjon/arkiv/administrativenhet
         personalmappe: http://localhost:8080/post
         graphql: https://api.felleskomponent.no/graphql/graphql
     cron:

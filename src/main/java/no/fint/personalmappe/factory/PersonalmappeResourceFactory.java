@@ -17,7 +17,7 @@ public final class PersonalmappeResourceFactory {
     private PersonalmappeResourceFactory() {
     }
 
-    public static PersonalmappeResource toPersonalmappeResource(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
+    public static PersonalmappeResource toPersonalmappeResource(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold, Boolean administrativEnhet) {
         PersonalmappeResource resource = new PersonalmappeResource();
 
         getPerson(arbeidsforhold).ifPresent(resource::addPerson);
@@ -29,7 +29,7 @@ public final class PersonalmappeResourceFactory {
 
             getLeder(arbeidsforhold).ifPresent(leder -> {
 
-                if (personalressurs.equalsIgnoreCase(leder)) {
+                if (personalressurs.equalsIgnoreCase(leder) || !administrativEnhet) {
                     getLedersLeder(arbeidsforhold).ifPresent(resource::addLeder);
                     getLedersArbeidssted(arbeidsforhold).ifPresent(resource::addArbeidssted);
 
