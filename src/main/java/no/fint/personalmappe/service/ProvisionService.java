@@ -91,8 +91,10 @@ public class ProvisionService {
         GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPHQL_QUERY, Collections.singletonMap("brukernavn", username));
 
         return fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
-                .timeout(Duration.ofSeconds(60), Mono.empty())
-                .onErrorResume(it -> Mono.empty())
+                .onErrorResume(it -> {
+                    log.error("{} - {}", username, it.getMessage());
+                    return Mono.empty();
+                })
                 .map(GraphQLPersonalmappe::getResult)
                 .map(GraphQLPersonalmappe.Result::getPersonalressurs)
                 .flatMapIterable(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
