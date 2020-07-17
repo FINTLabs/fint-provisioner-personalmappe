@@ -3,8 +3,8 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                withDockerRegistry([credentialsId: 'fintlabs.azurecr.io', url: 'https://fintlabs.azurecr.io']) {
-                    sh "docker pull fintlabs.azurecr.io/personalmappe-frontend:latest"
+                withDockerRegistry([credentialsId: 'fintlabsacr.azurecr.io', url: 'https://fintlabsacr.azurecr.io']) {
+                    sh "docker pull fintlabsacr.azurecr.io/personalmappe-frontend:latest"
                     sh "docker build -t ${GIT_COMMIT} ."
                 }
             }
@@ -14,18 +14,18 @@ pipeline {
                 branch 'master'
             }
             steps {
-                sh "docker tag ${GIT_COMMIT} fintlabs.azurecr.io/provisioner-personalmappe:build.${BUILD_NUMBER}"
-                withDockerRegistry([credentialsId: 'fintlabs.azurecr.io', url: 'https://fintlabs.azurecr.io']) {
-                    sh "docker push fintlabs.azurecr.io/provisioner-personalmappe:build.${BUILD_NUMBER}"
+                sh "docker tag ${GIT_COMMIT} fintlabsacr.azurecr.io/provisioner-personalmappe:build.${BUILD_NUMBER}"
+                withDockerRegistry([credentialsId: 'fintlabsacr.azurecr.io', url: 'https://fintlabsacr.azurecr.io']) {
+                    sh "docker push fintlabsacr.azurecr.io/provisioner-personalmappe:build.${BUILD_NUMBER}"
                 }
             }
         }
         stage('Publish PR') {
             when { changeRequest() }
             steps {
-                sh "docker tag ${GIT_COMMIT} fintlabs.azurecr.io/provisioner-personalmappe:${BRANCH_NAME}.${BUILD_NUMBER}"
-                withDockerRegistry([credentialsId: 'fintlabs.azurecr.io', url: 'https://fintlabs.azurecr.io']) {
-                    sh "docker push fintlabs.azurecr.io/provisioner-personalmappe:${BRANCH_NAME}.${BUILD_NUMBER}"
+                sh "docker tag ${GIT_COMMIT} fintlabsacr.azurecr.io/provisioner-personalmappe:${BRANCH_NAME}.${BUILD_NUMBER}"
+                withDockerRegistry([credentialsId: 'fintlabsacr.azurecr.io', url: 'https://fintlabsacr.azurecr.io']) {
+                    sh "docker push fintlabsacr.azurecr.io/provisioner-personalmappe:${BRANCH_NAME}.${BUILD_NUMBER}"
                 }
             }
         }
@@ -37,9 +37,9 @@ pipeline {
                 script {
                     VERSION = TAG_NAME[1..-1]
                 }
-                sh "docker tag ${GIT_COMMIT} fintlabs.azurecr.io/provisioner-personalmappe:${VERSION}"
-                withDockerRegistry([credentialsId: 'fintlabs.azurecr.io', url: 'https://fintlabs.azurecr.io']) {
-                    sh "docker push fintlabs.azurecr.io/provisioner-personalmappe:${VERSION}"
+                sh "docker tag ${GIT_COMMIT} fintlabsacr.azurecr.io/provisioner-personalmappe:${VERSION}"
+                withDockerRegistry([credentialsId: 'fintlabsacr.azurecr.io', url: 'https://fintlabsacr.azurecr.io']) {
+                    sh "docker push fintlabsacr.azurecr.io/provisioner-personalmappe:${VERSION}"
                 }
             }
         }
