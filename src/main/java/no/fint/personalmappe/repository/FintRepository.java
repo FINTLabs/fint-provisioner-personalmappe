@@ -4,10 +4,13 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.model.GraphQLQuery;
+import no.fint.personalmappe.model.LastUpdated;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.*;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.stereotype.Repository;
@@ -16,7 +19,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,25 +49,21 @@ public class FintRepository {
 
         OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
 
-        Mono<T> resources = webClient.get()
+        return webClient.get()
                 .uri(uri)
                 .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
                 .retrieve()
                 .bodyToMono(clazz);
-
-        sinceTimestamp.put(orgId, Instant.now().toEpochMilli());
-
-        return resources;
     }
 
     public <T> Mono<T> getUpdates(String orgId, Class<T> clazz, URI uri) {
         Long since = sinceTimestamp.getOrDefault(orgId, 0L);
 
-        Mono<T> resources = get(orgId, clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
+        get(orgId, LastUpdated.class, UriComponentsBuilder.fromUri(uri).pathSegment("last-updated").build().toUri())
+                .blockOptional()
+                .ifPresent(upd -> sinceTimestamp.put(orgId, upd.getLastUpdated()));
 
-        sinceTimestamp.put(orgId, Instant.now().toEpochMilli());
-
-        return resources;
+        return get(orgId, clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
     }
 
     public <T> Mono<ResponseEntity<T>> getForEntity(String orgId, Class<T> clazz, URI uri) {
