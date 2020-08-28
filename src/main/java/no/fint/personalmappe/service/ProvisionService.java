@@ -1,10 +1,14 @@
 package no.fint.personalmappe.service;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.fint.model.resource.FintLinks;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.arkiv.AdministrativEnhetResource;
 import no.fint.model.resource.administrasjon.arkiv.AdministrativEnhetResources;
+import no.fint.model.resource.administrasjon.arkiv.ArkivressursResources;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
@@ -20,16 +24,18 @@ import no.fint.personalmappe.utilities.NINUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SynchronousSink;
 
 import java.net.URI;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -40,6 +46,9 @@ public class ProvisionService {
     @Value("${fint.endpoints.personalmappe}")
     private URI personalmappeEndpoint;
 
+    @Value("${fint.endpoints.arkivressurs}")
+    private URI arkivressursEndpoint;
+
     @Value("${fint.endpoints.administrativ-enhet}")
     private URI administrativEnhetEndpoint;
 
@@ -48,7 +57,7 @@ public class ProvisionService {
 
     private static final String GRAPHQL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
 
-    private final MultiValueMap<String, String> administrativeEnheter = new LinkedMultiValueMap<>();
+    private final Multimap<String, String> administrativeEnheter = ArrayListMultimap.create();
 
     private final FintRepository fintRepository;
     private final MongoDBRepository mongoDBRepository;
@@ -65,15 +74,20 @@ public class ProvisionService {
     }
 
     public void provisionByOrgId(String orgId, int limit, Mono<PersonalressursResources> personalressursResources) {
-        if (administrativeEnheter.getOrDefault(orgId, Collections.emptyList()).isEmpty()) {
+        if (administrativeEnheter.get(orgId).isEmpty()) {
             updateAdministrativeEnheter(orgId);
         }
 
-        // TODO PUT Arkivressurs here somewhere?
-
-        List<String> usernames = personalressursResources
+        final List<PersonalressursResource> personalressursList = personalressursResources
                 .flatMapIterable(PersonalressursResources::getContent)
-                .toStream()
+                .collectList()
+                .blockOptional()
+                .orElseThrow(IllegalArgumentException::new);
+
+        updateArkivressurs(orgId, personalressursList);
+
+        List<String> usernames = personalressursList
+                .stream()
                 .map(PersonalressursResource::getBrukernavn)
                 .filter(Objects::nonNull)
                 .map(Identifikator::getIdentifikatorverdi)
@@ -87,6 +101,31 @@ public class ProvisionService {
                 .delayElements(Duration.ofMillis(500))
                 .flatMap(username -> getPersonalmappeResource(orgId, username))
                 .subscribe(personalmappeResource -> provision(orgId, personalmappeResource));
+    }
+
+    private void updateArkivressurs(String orgId, List<PersonalressursResource> personalressursList) {
+        final Set<String> selfLinks = personalressursList.stream().map(FintLinks::getSelfLinks).flatMap(List::stream).map(Link::getHref).collect(Collectors.toSet());
+        fintRepository.get(orgId, ArkivressursResources.class, arkivressursEndpoint)
+                .flatMapMany(r -> Flux.fromStream(r.getContent().stream()))
+                .filter(a -> a.getPersonalressurs().stream().map(Link::getHref).anyMatch(selfLinks::contains))
+                .flatMap(arkivressurs ->
+                        arkivressurs
+                                .getSelfLinks()
+                                .stream()
+                                .map(Link::getHref)
+                                .filter(StringUtils::isNotBlank)
+                                .map(s -> UriComponentsBuilder.fromUriString(s).build().toUri())
+                                .findAny()
+                                .map(uri -> fintRepository.putForEntity(orgId, arkivressurs, uri))
+                                .orElseGet(Mono::empty))
+                .handle(transformNullable(r -> r.getHeaders().getLocation()))
+                .delayElements(Duration.ofSeconds(30))
+                .flatMap(uri -> fintRepository.headForEntity(orgId, uri))
+                .subscribe(it -> log.trace("Result: {}", it.getStatusCode()));
+    }
+
+    public static <T, U> BiConsumer<U, SynchronousSink<T>> transformNullable(Function<U, T> mapper) {
+        return (element, sink) -> Optional.ofNullable(mapper.apply(element)).ifPresent(sink::next);
     }
 
     public Mono<PersonalmappeResource> getPersonalmappeResource(String orgId, String username) {
@@ -237,6 +276,6 @@ public class ProvisionService {
                 .toStream()
                 .map(AdministrativEnhetResource::getSystemId)
                 .map(Identifikator::getIdentifikatorverdi)
-                .forEach(id -> administrativeEnheter.add(orgId, id));
+                .forEach(id -> administrativeEnheter.put(orgId, id));
     }
 }

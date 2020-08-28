@@ -104,7 +104,7 @@ public class FintRepository {
                 .toBodilessEntity();
     }
 
-    public Mono<ResponseEntity<Void>> putForEntity(String orgId, PersonalmappeResource personalmappeResource, URI uri) {
+    public <T> Mono<ResponseEntity<Void>> putForEntity(String orgId, T resource, URI uri) {
         OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
 
         OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
@@ -112,7 +112,7 @@ public class FintRepository {
         return webClient.put()
                 .uri(uri)
                 .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
-                .bodyValue(personalmappeResource)
+                .bodyValue(resource)
                 .retrieve()
                 .toBodilessEntity();
     }
@@ -126,5 +126,17 @@ public class FintRepository {
                 }).build();
 
         return authorizedClientManager.authorize(authorizeRequest);
+    }
+
+    public Mono<ResponseEntity<Void>> headForEntity(String orgId, URI uri) {
+        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
+
+        OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
+
+        return webClient.head()
+                .uri(uri)
+                .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
+                .retrieve()
+                .toBodilessEntity();
     }
 }
