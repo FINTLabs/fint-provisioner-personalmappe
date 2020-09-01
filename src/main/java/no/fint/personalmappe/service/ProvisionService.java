@@ -74,6 +74,12 @@ public class ProvisionService {
     }
 
     public void provisionByOrgId(String orgId, int limit, Mono<PersonalressursResources> personalressursResources) {
+        final OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
+        if (organisation == null) {
+            log.error("No configuration for {}", orgId);
+            return;
+        }
+
         if (administrativeEnheter.get(orgId).isEmpty()) {
             updateAdministrativeEnheter(orgId);
         }
@@ -84,7 +90,10 @@ public class ProvisionService {
                 .blockOptional()
                 .orElseThrow(IllegalArgumentException::new);
 
-        updateArkivressurs(orgId, personalressursList);
+        if (organisation.isArkivressurs()) {
+            log.info("{}: Updating Arkivressurs objects...", orgId);
+            updateArkivressurs(orgId, personalressursList);
+        }
 
         List<String> usernames = personalressursList
                 .stream()
@@ -118,12 +127,14 @@ public class ProvisionService {
                                 .findAny()
                                 .map(uri -> fintRepository.putForEntity(orgId, arkivressurs, uri))
                                 .orElseGet(Mono::empty))
-                .onErrorContinue((e,r) -> log.info("Error on {}", r))
+                .onErrorContinue((e,r) -> log.info("{}: Error on {}", orgId, r))
                 .handle(transformNullable(r -> r.getHeaders().getLocation()))
                 .delayElements(Duration.ofSeconds(10))
                 .flatMap(uri -> fintRepository.headForEntity(orgId, uri))
-                .onErrorContinue((e,r) -> log.info("Error on {}", r))
-                .subscribe(it -> log.info("Arkivressurs: {} {}", it.getStatusCode(), it.getHeaders().getLocation()));
+                .onErrorContinue((e,r) -> log.info("{}: Error on {}", orgId, r))
+                .doOnNext(it -> log.info("{}: Arkivressurs: {} {}", orgId, it.getStatusCode(), it.getHeaders().getLocation()))
+                .count()
+                .subscribe(it -> log.info("{}: Updated {} Arkivressurs objects.", orgId, it));
     }
 
     public static <T, U> BiConsumer<U, SynchronousSink<T>> transformNullable(Function<U, T> mapper) {
