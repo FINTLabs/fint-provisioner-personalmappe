@@ -118,10 +118,12 @@ public class ProvisionService {
                                 .findAny()
                                 .map(uri -> fintRepository.putForEntity(orgId, arkivressurs, uri))
                                 .orElseGet(Mono::empty))
+                .onErrorContinue((e,r) -> log.info("Error on {}", r))
                 .handle(transformNullable(r -> r.getHeaders().getLocation()))
-                .delayElements(Duration.ofSeconds(30))
+                .delayElements(Duration.ofSeconds(10))
                 .flatMap(uri -> fintRepository.headForEntity(orgId, uri))
-                .subscribe(it -> log.trace("Result: {}", it.getStatusCode()));
+                .onErrorContinue((e,r) -> log.info("Error on {}", r))
+                .subscribe(it -> log.info("Arkivressurs: {} {}", it.getStatusCode(), it.getHeaders().getLocation()));
     }
 
     public static <T, U> BiConsumer<U, SynchronousSink<T>> transformNullable(Function<U, T> mapper) {
@@ -171,7 +173,12 @@ public class ProvisionService {
     }
 
     public void doTransformation(String orgId, PersonalmappeResource personalmappeResource) {
-        organisationProperties.getOrganisations().get(orgId).getTransformationScripts().forEach(script -> policyService.transform(script, personalmappeResource));
+        if (organisationProperties.getOrganisations().containsKey(orgId)) {
+            final List<String> transformationScripts = organisationProperties.getOrganisations().get(orgId).getTransformationScripts();
+            if (transformationScripts != null) {
+                transformationScripts.forEach(script -> policyService.transform(script, personalmappeResource));
+            }
+        }
     }
 
     private void onCreate(String orgId, PersonalmappeResource personalmappeResource, String id, String username) {
