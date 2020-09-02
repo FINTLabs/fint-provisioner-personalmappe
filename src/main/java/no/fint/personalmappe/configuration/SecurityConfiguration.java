@@ -69,7 +69,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Bean
     public ClientHttpConnector clientHttpConnector() {
-        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.elastic("Elastic", Duration.ofSeconds(300))));
+        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.elastic("Elastic", Duration.ofSeconds(300), Duration.ofMinutes(60))));
     }
 
     @Bean
