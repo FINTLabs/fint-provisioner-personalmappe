@@ -25,6 +25,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import java.net.URI;
 import java.time.Duration;
@@ -167,7 +168,7 @@ public class ProvisionService {
                 .doOnSuccess(responseEntity -> responseHandlerService.handleResource(responseEntity, mongoDBPersonalmappe))
                 .doOnError(WebClientResponseException.class,
                         clientResponse -> responseHandlerService.handleError(clientResponse, mongoDBPersonalmappe))
-                .retryWhen(responseHandlerService.finalStatusPending)
+                .retryWhen(Retry.withThrowable(responseHandlerService.finalStatusPending))
                 .subscribe();
     }
 

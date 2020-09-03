@@ -24,6 +24,7 @@ fint:
             bulk: false
             delta: false
             transformation-scripts:
+
 spring:
     security:
         oauth2:
@@ -39,3 +40,5 @@ spring:
                     fint:
                         token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
 
+    main:
+        web-application-type: reactive
