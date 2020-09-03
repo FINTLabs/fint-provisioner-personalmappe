@@ -123,7 +123,7 @@ public class ResponseHandlerService {
                 save(mongoDBPersonalmappe);
                 break;
             default:
-                log.error("{} {}", response.getStatusCode(), response.getResponseBodyAsString());
+                log.error("{} {}", response.getStatusCode(), response.getRequest());
                 break;
         }
     }

@@ -49,7 +49,7 @@ public class SecurityConfiguration {
                                                                          ReactiveOAuth2AuthorizedClientService authorizedClientService) {
 
         ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider = ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
-                .password().build();
+                .password().refreshToken().build();
 
         AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager authorizedClientManager =
                 new AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager(clientRegistrationRepository, authorizedClientService);

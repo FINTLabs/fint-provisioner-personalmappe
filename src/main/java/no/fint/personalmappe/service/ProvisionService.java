@@ -8,6 +8,7 @@ import no.fint.model.resource.administrasjon.arkiv.AdministrativEnhetResources;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
+import no.fint.personalmappe.exception.TokenException;
 import no.fint.personalmappe.factory.PersonalmappeResourceFactory;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
 import no.fint.personalmappe.model.GraphQLQuery;
@@ -168,6 +169,8 @@ public class ProvisionService {
                 .doOnSuccess(responseEntity -> responseHandlerService.handleResource(responseEntity, mongoDBPersonalmappe))
                 .doOnError(WebClientResponseException.class,
                         clientResponse -> responseHandlerService.handleError(clientResponse, mongoDBPersonalmappe))
+                .doOnError(TokenException.class,
+                        clientResponse -> log.error(clientResponse.getMessage()))
                 .retryWhen(Retry.withThrowable(responseHandlerService.finalStatusPending))
                 .subscribe();
     }
