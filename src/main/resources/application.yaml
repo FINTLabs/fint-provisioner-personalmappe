@@ -11,7 +11,7 @@ fint:
         graphql: https://api.felleskomponent.no/graphql/graphql
     cron:
         bulk: 0 0 0 * * MON-FRI
-        delta: 0 */5 8-16 * * MON-FRI
+        delta: 0 */15 8-14 * * MON-FRI
     organisations:
         viken-no:
             registration: viken-no

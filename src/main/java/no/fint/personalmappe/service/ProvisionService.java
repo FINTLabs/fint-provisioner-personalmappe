@@ -84,7 +84,7 @@ public class ProvisionService {
 
         Flux.fromIterable(usernames)
                 .limitRequest(limit == 0 ? usernames.size() : limit)
-                .delayElements(Duration.ofMillis(500))
+                .delayElements(Duration.ofMillis(1000))
                 .flatMap(username -> getPersonalmappeResource(orgId, username))
                 .subscribe(personalmappeResource -> provision(orgId, personalmappeResource));
     }
