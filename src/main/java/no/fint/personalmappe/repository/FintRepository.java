@@ -81,11 +81,6 @@ public class FintRepository {
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))
                         .retrieve()
-                        .onStatus(s -> s.equals(HttpStatus.UNAUTHORIZED), c ->
-                                Mono.just(new TokenException(
-                                        Optional.ofNullable(client.getAccessToken()).map(OAuth2AccessToken::getTokenValue).orElse("No token") + " - " +
-                                                Optional.ofNullable(client.getAccessToken()).map(OAuth2AccessToken::getExpiresAt).map(Instant::toString).orElse("No expiration")
-                                )))
                         .toEntity(clazz)
         );
     }

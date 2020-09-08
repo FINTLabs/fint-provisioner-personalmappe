@@ -169,8 +169,6 @@ public class ProvisionService {
                 .doOnSuccess(responseEntity -> responseHandlerService.handleResource(responseEntity, mongoDBPersonalmappe))
                 .doOnError(WebClientResponseException.class,
                         clientResponse -> responseHandlerService.handleError(clientResponse, mongoDBPersonalmappe))
-                .doOnError(TokenException.class,
-                        clientResponse -> log.error(clientResponse.getMessage()))
                 .retryWhen(Retry.withThrowable(responseHandlerService.finalStatusPending))
                 .subscribe();
     }
