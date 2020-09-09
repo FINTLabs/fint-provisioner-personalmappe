@@ -12,7 +12,6 @@ import no.fint.model.resource.administrasjon.arkiv.ArkivressursResources;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
-import no.fint.personalmappe.exception.TokenException;
 import no.fint.personalmappe.factory.PersonalmappeResourceFactory;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
 import no.fint.personalmappe.model.GraphQLQuery;
@@ -29,8 +28,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 import reactor.core.publisher.SynchronousSink;
+import reactor.util.retry.Retry;
 
 import java.net.URI;
 import java.time.Duration;
