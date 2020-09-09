@@ -3,6 +3,7 @@ package no.fint.personalmappe.service
 import no.fint.model.felles.kompleksedatatyper.Personnavn
 import no.fint.model.resource.Link
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
+import no.fint.personalmappe.factory.PersonalmappeResourceFactory
 import no.fint.personalmappe.model.GraphQLPersonalmappe
 import no.fint.personalmappe.properties.OrganisationProperties
 import no.fint.personalmappe.repository.FintRepository
@@ -13,22 +14,14 @@ import spock.lang.Specification
 import java.time.LocalDateTime
 
 class ProvisionServiceSpec extends Specification {
-    FintRepository fintRepository
-    MongoDBRepository mongoDBRepository
-    ResponseHandlerService responseHandlerService
-    OrganisationProperties organisationProperties
-    ProvisionService provisionService
-    PolicyService policyService
+    FintRepository fintRepository = Mock()
+    MongoDBRepository mongoDBRepository = Mock()
+    ResponseHandlerService responseHandlerService = Mock()
+    OrganisationProperties organisationProperties = Mock()
+    PolicyService policyService = Mock()
+    PersonalmappeResourceFactory personalmappeResourceFactory = Mock()
 
-    void setup() {
-        fintRepository = Mock()
-        mongoDBRepository = Mock()
-        responseHandlerService = Mock()
-        organisationProperties = Mock()
-        policyService = Mock()
-
-        provisionService = new ProvisionService(fintRepository, organisationProperties, mongoDBRepository, responseHandlerService, policyService)
-    }
+    ProvisionService provisionService = new ProvisionService(fintRepository, organisationProperties, mongoDBRepository, responseHandlerService, personalmappeResourceFactory, policyService)
 
     def "getPersonalmappeResources() returns list of personalmappeResource"() {
         when:
@@ -36,48 +29,6 @@ class ProvisionServiceSpec extends Specification {
 
         then:
         1 * fintRepository.post(_ as String, GraphQLPersonalmappe.class, _, _) >> Mono.just(getGraphQLPersonalmappe())
-    }
-
-    def "isActive() returns true when now is within gyldighetsperiode"() {
-        when:
-        def valid = provisionService.isActive(LocalDateTime.now()).test(getGraphQLPersonalmappeArbeidsforhold())
-
-        then:
-        valid
-    }
-
-    def "isHovedstilling() returns true when hovedstilling is true"() {
-        when:
-        def valid = provisionService.isHovedstilling().test(getGraphQLPersonalmappeArbeidsforhold())
-
-        then:
-        valid
-    }
-
-    def "hasPersonalressurskategori() returns true when personalressurskategori is present"() {
-        when:
-        def valid = provisionService.hasPersonalressurskategori(_ as String).test(getGraphQLPersonalmappeArbeidsforhold())
-
-        then:
-        1 * organisationProperties.getOrganisations() >> [(_ as String): new OrganisationProperties.Organisation(
-                username: _ as String, password: _ as String, registration: _ as String, personalressurskategori: ['F'])]
-        valid
-    }
-
-    def "hasMandatoryFieldsAndRelations() returns true when all mandatory fields and relations are present"() {
-        when:
-        def valid = provisionService.hasMandatoryFieldsAndRelations().test(getPersonalmappeResource())
-
-        then:
-        valid
-    }
-
-    def "hasValidLeader() returns true when subject and leader is not equal"() {
-        when:
-        def valid = provisionService.hasValidLeader().test(getPersonalmappeResource())
-
-        then:
-        valid
     }
 
     GraphQLPersonalmappe getGraphQLPersonalmappe() {

@@ -4,12 +4,12 @@ import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import org.apache.commons.lang3.StringUtils;
 
-public class NINUtilities {
+public class PersonnelUtilities {
     public static String getNIN(PersonalmappeResource personalmappeResource) {
         return personalmappeResource.getPerson().stream()
                 .map(Link::getHref)
                 .map(href -> StringUtils.substringAfterLast(href, "/"))
-                .map(NINUtilities::maskId)
+                .map(PersonnelUtilities::maskId)
                 .findAny()
                 .orElse(null);
     }
@@ -20,5 +20,14 @@ public class NINUtilities {
         } catch (NumberFormatException e) {
             return nin;
         }
+    }
+
+
+    public static String getUsername(PersonalmappeResource personalmappeResource) {
+        return personalmappeResource.getPersonalressurs().stream()
+                .map(Link::getHref)
+                .map(href -> StringUtils.substringAfterLast(href, "/"))
+                .findAny()
+                .orElse(null);
     }
 }

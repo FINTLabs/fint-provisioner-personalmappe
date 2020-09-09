@@ -8,6 +8,7 @@ fint:
         #personalmappe: https://alpha.felleskomponent.no/administrasjon/personal/personalmappe
         administrativ-enhet: https://alpha.felleskomponent.no/administrasjon/arkiv/administrativenhet
         personalmappe: http://localhost:8080/post
+        arkivressurs: https://alpha.felleskomponent.no/administrasjon/arkiv/arkivressurs
         graphql: https://api.felleskomponent.no/graphql/graphql
     cron:
         bulk: 0 0 0 * * MON-FRI
