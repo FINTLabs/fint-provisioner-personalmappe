@@ -5,11 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.exception.TokenException;
 import no.fint.personalmappe.model.GraphQLQuery;
+import no.fint.personalmappe.model.LastUpdated;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.*;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -21,7 +24,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,27 +52,23 @@ public class FintRepository {
 
         OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
 
-        Mono<T> resources = authorizedClient(organisation).flatMap(client ->
+        return authorizedClient(organisation).flatMap(client ->
                 webClient.get()
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))
                         .retrieve()
                         .bodyToMono(clazz)
         );
-
-        sinceTimestamp.put(orgId, Instant.now().toEpochMilli());
-
-        return resources;
     }
 
     public <T> Mono<T> getUpdates(String orgId, Class<T> clazz, URI uri) {
         Long since = sinceTimestamp.getOrDefault(orgId, 0L);
 
-        Mono<T> resources = get(orgId, clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
+        get(orgId, LastUpdated.class, UriComponentsBuilder.fromUri(uri).pathSegment("last-updated").build().toUri())
+                .blockOptional()
+                .ifPresent(upd -> sinceTimestamp.put(orgId, upd.getLastUpdated()));
 
-        sinceTimestamp.put(orgId, Instant.now().toEpochMilli());
-
-        return resources;
+        return get(orgId, clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
     }
 
     public <T> Mono<ResponseEntity<T>> getForEntity(String orgId, Class<T> clazz, URI uri) {
@@ -111,14 +109,14 @@ public class FintRepository {
         );
     }
 
-    public Mono<ResponseEntity<Void>> putForEntity(String orgId, PersonalmappeResource personalmappeResource, URI uri) {
+    public <T> Mono<ResponseEntity<Void>> putForEntity(String orgId, T resource, URI uri) {
         OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
 
         return authorizedClient(organisation).flatMap(client ->
                 webClient.put()
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))
-                        .bodyValue(personalmappeResource)
+                        .bodyValue(resource)
                         .retrieve()
                         .toBodilessEntity()
         );
@@ -133,5 +131,17 @@ public class FintRepository {
                 }).build();
 
         return authorizedClientManager.authorize(authorizeRequest);
+    }
+
+    public Mono<ResponseEntity<Void>> headForEntity(String orgId, URI uri) {
+        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
+
+        OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(organisation);
+
+        return webClient.head()
+                .uri(uri)
+                .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(authorizedClient))
+                .retrieve()
+                .toBodilessEntity();
     }
 }
