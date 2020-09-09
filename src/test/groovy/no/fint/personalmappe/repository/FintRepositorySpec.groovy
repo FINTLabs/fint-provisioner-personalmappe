@@ -19,12 +19,12 @@ class FintRepositorySpec extends Specification {
     MockWebServer mockWebServer = new MockWebServer()
     WebClient webClient
 
-    OAuth2AuthorizedClientManager authorizedClientManager = Mock {
-        1 * authorize(_) >> Mock(OAuth2AuthorizedClient)
+    OAuth2AuthorizedClientManager authorizedClientManager = Stub(OAuth2AuthorizedClientManager) {
+        authorize(_) >> Mock(OAuth2AuthorizedClient)
     }
 
-    OrganisationProperties organisationProperties = Mock {
-        1 * getOrganisations() >> [(_ as String): new OrganisationProperties.Organisation(
+    OrganisationProperties organisationProperties = Stub(OrganisationProperties) {
+        getOrganisations() >> ['foo.org': new OrganisationProperties.Organisation(
                 username: _ as String, password: _ as String, registration: _ as String, personalressurskategori: [])]
     }
 
@@ -43,7 +43,7 @@ class FintRepositorySpec extends Specification {
                 .setResponseCode(200))
 
         when:
-        def resources = fintRepository.get(_ as String, PersonalressursResources.class, URI.create(mockWebServer.url("/").toString())).block()
+        def resources = fintRepository.get('foo.org', PersonalressursResources.class, URI.create(mockWebServer.url("/").toString())).block()
 
         then:
         resources.totalItems == 1
@@ -52,15 +52,20 @@ class FintRepositorySpec extends Specification {
     def "getUpdates() for given type returns resources of given type"() {
         given:
         mockWebServer.enqueue(new MockResponse()
+                .setBody('{ "lastUpdated": 1234 }')
+                .setHeader('content-type', 'application/json')
+                .setResponseCode(200))
+        mockWebServer.enqueue(new MockResponse()
                 .setBody(new ObjectMapper().writeValueAsString(getPersonalressursResources()))
                 .setHeader('content-type', 'application/json')
                 .setResponseCode(200))
 
         when:
-        def resources = fintRepository.getUpdates(_ as String, PersonalressursResources.class, URI.create(mockWebServer.url("/").toString())).block()
+        def resources = fintRepository.getUpdates('foo.org', PersonalressursResources.class, URI.create(mockWebServer.url("/").toString())).block()
 
         then:
         resources.totalItems == 1
+        fintRepository.sinceTimestamp['foo.org'] == 1234
     }
 
     def "getForEntity() returns response entity"() {
@@ -70,7 +75,7 @@ class FintRepositorySpec extends Specification {
                 .setResponseCode(303))
 
         when:
-        def resources = fintRepository.getForEntity(_ as String, Object.class, URI.create(mockWebServer.url("/").toString())).block()
+        def resources = fintRepository.getForEntity('foo.org', Object.class, URI.create(mockWebServer.url("/").toString())).block()
 
         then:
         resources.statusCodeValue == 303
@@ -84,7 +89,7 @@ class FintRepositorySpec extends Specification {
                 .setResponseCode(200))
 
         when:
-        def resources = fintRepository.post(_ as String, GraphQLPersonalmappe.class, new GraphQLQuery(), URI.create(mockWebServer.url("/").toString())).block()
+        def resources = fintRepository.post('foo.org', GraphQLPersonalmappe.class, new GraphQLQuery(), URI.create(mockWebServer.url("/").toString())).block()
 
         then:
         resources.result.personalressurs.ansattnummer.identifikatorverdi == '12345'
@@ -97,7 +102,7 @@ class FintRepositorySpec extends Specification {
                 .setResponseCode(202))
 
         when:
-        def resources = fintRepository.postForEntity(_ as String, new PersonalmappeResource(), URI.create(mockWebServer.url("/").toString())).block()
+        def resources = fintRepository.postForEntity('foo.org', new PersonalmappeResource(), URI.create(mockWebServer.url("/").toString())).block()
 
         then:
         resources.statusCodeValue == 202
@@ -111,7 +116,7 @@ class FintRepositorySpec extends Specification {
                 .setResponseCode(202))
 
         when:
-        def resources = fintRepository.putForEntity(_ as String, new PersonalmappeResource(), URI.create(mockWebServer.url("/").toString())).block()
+        def resources = fintRepository.putForEntity('foo.org', new PersonalmappeResource(), URI.create(mockWebServer.url("/").toString())).block()
 
         then:
         resources.statusCodeValue == 202
