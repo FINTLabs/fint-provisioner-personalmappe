@@ -21,6 +21,7 @@ public class OrganisationProperties {
         private int bulkLimit;
         private boolean bulk;
         private boolean delta;
+        private boolean arkivressurs;
         private List<String> personalressurskategori;
         private List<String> transformationScripts;
     }
