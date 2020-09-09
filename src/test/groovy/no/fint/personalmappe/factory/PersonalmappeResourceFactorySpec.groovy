@@ -139,7 +139,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
         def personalmappe = getPersonalmappeResource('brukernavn', 'organisasjonsId-leder', 'brukernavn-leders-leder')
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource('orgId', arbeidsforhold, [])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource('orgId', arbeidsforhold, [null])
 
         then:
         StepVerifier.create(resource).expectNext(personalmappe).verifyComplete()

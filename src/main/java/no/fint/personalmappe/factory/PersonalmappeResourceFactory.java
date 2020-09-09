@@ -43,8 +43,7 @@ public class PersonalmappeResourceFactory {
                 getLeder(arbeidsforhold).ifPresent(leder -> {
                     Optional<String> arbeidssted = getArbeidssted(arbeidsforhold);
 
-                    if (personalressurs.equalsIgnoreCase(leder) ||
-                            !administrativEnheter.contains(arbeidssted.orElse(null))) {
+                    if (personalressurs.equalsIgnoreCase(leder) || !administrativEnheter.contains(arbeidssted.orElse(null))) {
                         getLedersLeder(arbeidsforhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(resource::addLeder);
                         getLedersArbeidssted(arbeidsforhold).map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(resource::addArbeidssted);
                     } else {
