@@ -22,7 +22,7 @@ public class OrganisationProperties {
         private boolean bulk;
         private boolean delta;
         private boolean arkivressurs;
-        private List<String> personalressurskategori;
+        private String[] personalressurskategori;
         private List<String> transformationScripts;
     }
 }

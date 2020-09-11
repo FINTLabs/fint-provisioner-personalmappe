@@ -142,12 +142,14 @@ public class PersonalmappeResourceFactory {
     }
 
     private BiPredicate<String, GraphQLPersonalmappe.Arbeidsforhold> hasPersonalressurskategori() {
-        return (orgId, arbeidsforhold) -> organisationProperties.getOrganisations().get(orgId).getPersonalressurskategori()
-                .contains(Optional.ofNullable(arbeidsforhold)
-                        .map(GraphQLPersonalmappe.Arbeidsforhold::getPersonalressurs)
-                        .map(GraphQLPersonalmappe.Personalressurs::getPersonalressurskategori)
-                        .map(GraphQLPersonalmappe.Personalressurskategori::getKode)
-                        .orElse(null));
+        return (orgId, arbeidsforhold) ->
+                Arrays.stream(organisationProperties.getOrganisations().get(orgId).getPersonalressurskategori())
+                        .anyMatch(category -> Optional.ofNullable(arbeidsforhold)
+                                .map(GraphQLPersonalmappe.Arbeidsforhold::getPersonalressurs)
+                                .map(GraphQLPersonalmappe.Personalressurs::getPersonalressurskategori)
+                                .map(GraphQLPersonalmappe.Personalressurskategori::getKode)
+                                .filter(category::equals)
+                                .isPresent());
     }
 
     public Predicate<PersonalmappeResource> validPersonalmappeResource() {
