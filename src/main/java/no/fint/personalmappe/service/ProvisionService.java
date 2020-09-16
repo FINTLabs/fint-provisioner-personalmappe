@@ -153,7 +153,10 @@ public class ProvisionService {
                 .map(GraphQLPersonalmappe::getResult)
                 .map(GraphQLPersonalmappe.Result::getPersonalressurs)
                 .flatMapIterable(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
-                .onErrorContinue((error, object) -> log.error("{} - {}", username, error.getMessage()))
+                .onErrorResume(error -> {
+                    log.error("{} - {}", username, error.getMessage());
+                    return Flux.empty();
+                })
                 .flatMap(arbeidsforhold -> personalmappeResourceFactory.toPersonalmappeResource(orgId, arbeidsforhold, administrativeEnheter.get(orgId)))
                 .singleOrEmpty()
                 .doOnNext(it -> log.trace(username));
