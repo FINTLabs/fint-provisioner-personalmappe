@@ -35,6 +35,7 @@ dependencies {
 
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'com.google.guava:guava:29.0-jre'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.2'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -47,6 +48,7 @@ dependencies {
 	testImplementation 'org.spockframework:spock-spring:1.3-groovy-2.5'
 	testImplementation 'com.squareup.okhttp3:mockwebserver:4.3.1'
 	testImplementation 'com.squareup.okhttp3:okhttp:4.3.1'
+	testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.2.0'
 
 	implementation 'no.fint:fint-administrasjon-resource-model-java:3.4.0'
 	implementation 'no.fint:fint-utdanning-resource-model-java:3.4.0'

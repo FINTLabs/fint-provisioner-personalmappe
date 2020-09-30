@@ -54,7 +54,7 @@ public class ProvisionService {
     @Value("${fint.endpoints.graphql}")
     private URI graphqlEndpoint;
 
-    private static final String GRAPHQL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
+    public static final String GRAPHQL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
 
     private final Multimap<String, String> administrativeEnheter = ArrayListMultimap.create();
 

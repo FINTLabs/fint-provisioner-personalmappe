@@ -164,8 +164,8 @@ class PersonalmappeResourceFactorySpec extends Specification {
         personnavn.setMellomnavn('mellomnavn')
         personnavn.setEtternavn('etternavn')
         resource.setNavn(personnavn)
-        resource.setPart(Collections.singletonList(new PartsinformasjonResource()));
-        resource.setTittel("DUMMY");
+        resource.setPart(Collections.singletonList(new PartsinformasjonResource()))
+        resource.setTittel("DUMMY")
         resource.addPerson(Link.with(Person.class, 'fodselsnummer', 'fodselsnummer'))
         resource.addPersonalressurs(Link.with(Personalressurs.class, 'brukernavn', brukernavn))
         resource.addArbeidssted(Link.with(Organisasjonselement.class, 'organisasjonsid', organisajonsId))
