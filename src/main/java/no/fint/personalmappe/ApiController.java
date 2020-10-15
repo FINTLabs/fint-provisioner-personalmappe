@@ -8,7 +8,7 @@ import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
 import no.fint.personalmappe.service.ProvisionService;
-import no.fint.personalmappe.utilities.NINUtilities;
+import no.fint.personalmappe.utilities.PersonnelUtilities;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -75,7 +75,7 @@ public class ApiController {
         provisionService.provision(orgId, personalmappeResource);
         TimeUnit.SECONDS.sleep(1);
 
-        return mongoDBRepository.findById(orgId + "_" + NINUtilities.getNIN(personalmappeResource))
+        return mongoDBRepository.findById(orgId + "_" + PersonnelUtilities.getNIN(personalmappeResource))
                 .map(resource -> ResponseEntity.status(resource.getStatus()).body(resource.getMessage()))
                 .orElse(ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build());
     }

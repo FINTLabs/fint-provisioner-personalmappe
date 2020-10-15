@@ -5,51 +5,54 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.*;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 @Configuration
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+@EnableWebFluxSecurity
+public class SecurityConfiguration {
 
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-                .authorizeRequests()
-                // .requestMatchers(EndpointRequest.to("health")).permitAll()
-                .anyRequest()
-                .permitAll();
+    @Bean
+    public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http) {
+        return http
+                .authorizeExchange()
+                .anyExchange().permitAll()
+                .and()
+                .httpBasic().disable()
+                .csrf().disable()
+                .build();
     }
 
     @Bean
     public Authentication dummyAuthentication() {
-        return new UsernamePasswordAuthenticationToken("erjegen", "personalmappe", Collections.emptyList());
+        return new UsernamePasswordAuthenticationToken("personal", "mappe", Collections.emptyList());
     }
 
     @Bean
-    public OAuth2AuthorizedClientManager authorizedClientManager(ClientRegistrationRepository clientRegistrationRepository,
-                                                                 OAuth2AuthorizedClientService authorizedClientService) {
+    public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(ReactiveClientRegistrationRepository clientRegistrationRepository,
+                                                                         ReactiveOAuth2AuthorizedClientService authorizedClientService) {
 
-        OAuth2AuthorizedClientProvider authorizedClientProvider = OAuth2AuthorizedClientProviderBuilder.builder()
+        ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider = ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
                 .password().refreshToken().build();
 
-        AuthorizedClientServiceOAuth2AuthorizedClientManager authorizedClientManager =
-                new AuthorizedClientServiceOAuth2AuthorizedClientManager(clientRegistrationRepository, authorizedClientService);
+        AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager authorizedClientManager =
+                new AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager(clientRegistrationRepository, authorizedClientService);
 
         authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
 
@@ -58,12 +61,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return authorizedClientManager;
     }
 
-    private Function<OAuth2AuthorizeRequest, Map<String, Object>> contextAttributesMapper() {
+    private Function<OAuth2AuthorizeRequest, Mono<Map<String, Object>>> contextAttributesMapper() {
         return authorizeRequest -> {
             Map<String, Object> contextAttributes = new HashMap<>();
             contextAttributes.put(OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME, authorizeRequest.getAttribute(OAuth2ParameterNames.USERNAME));
             contextAttributes.put(OAuth2AuthorizationContext.PASSWORD_ATTRIBUTE_NAME, authorizeRequest.getAttribute(OAuth2ParameterNames.PASSWORD));
-            return contextAttributes;
+            return Mono.just(contextAttributes);
         };
     }
 
@@ -73,13 +76,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public WebClient webClient(WebClient.Builder builder, OAuth2AuthorizedClientManager authorizedClientManager, ClientHttpConnector clientHttpConnector) {
+    public WebClient webClient(WebClient.Builder builder, ReactiveOAuth2AuthorizedClientManager authorizedClientManager, ClientHttpConnector clientHttpConnector) {
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(-1))
                 .build();
 
-        ServletOAuth2AuthorizedClientExchangeFilterFunction authorizedClientExchangeFilterFunction =
-                new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+        ServerOAuth2AuthorizedClientExchangeFilterFunction authorizedClientExchangeFilterFunction =
+                new ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
 
         return builder
                 .clientConnector(clientHttpConnector)

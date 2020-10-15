@@ -11,16 +11,17 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
 import spock.lang.Specification
 
 class FintRepositorySpec extends Specification {
     MockWebServer mockWebServer = new MockWebServer()
     WebClient webClient
 
-    OAuth2AuthorizedClientManager authorizedClientManager = Stub(OAuth2AuthorizedClientManager) {
-        authorize(_) >> Mock(OAuth2AuthorizedClient)
+    ReactiveOAuth2AuthorizedClientManager authorizedClientManager = Stub(ReactiveOAuth2AuthorizedClientManager) {
+        authorize(_) >> Mono.just(Mock(OAuth2AuthorizedClient))
     }
 
     OrganisationProperties organisationProperties = Stub(OrganisationProperties) {

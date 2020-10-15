@@ -1,6 +1,6 @@
 FROM fintlabsacr.azurecr.io/personalmappe-frontend:latest as client
 
-FROM gradle:6.0.1-jdk8 as builder
+FROM gradle:6.3.0-jdk8 as builder
 USER root
 COPY . .
 COPY --from=client /src/build/ src/main/resources/static/

@@ -1,29 +1,24 @@
-springfox:
-    title: 'FINT Personalmappe Provisioning Service'
-    version: '1.0.0'
-
 fint:
     endpoints:
-        personalressurs: https://api.felleskomponent.no/administrasjon/personal/personalressurs
-        #personalmappe: https://alpha.felleskomponent.no/administrasjon/personal/personalmappe
-        administrativ-enhet: https://alpha.felleskomponent.no/administrasjon/arkiv/administrativenhet
-        personalmappe: http://localhost:8080/post
-        graphql: https://api.felleskomponent.no/graphql/graphql
+        personalressurs:
+        administrativ-enhet:
+        personalmappe:
+        arkivressurs:
+        graphql:
     cron:
-        bulk: 0 0 0 * * MON-FRI
-        delta: 0 */5 8-16 * * MON-FRI
+        bulk:
+        delta:
     organisations:
         viken-no:
-            registration: viken-no
+            registration:
             username:
             password:
             personalressurskategori:
-            - F
-            - M
-            bulk-limit: 5
-            bulk: false
-            delta: false
+            bulk-limit:
+            bulk:
+            delta:
             transformation-scripts:
+
 spring:
     security:
         oauth2:
@@ -32,10 +27,12 @@ spring:
                     viken-no:
                         client-id:
                         client-secret:
-                        authorization-grant-type: password
-                        scope: fint-client
+                        authorization-grant-type:
+                        scope:
                         provider: fint
                 provider:
                     fint:
-                        token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
+                        token-uri:
 
+    main:
+        web-application-type: reactive

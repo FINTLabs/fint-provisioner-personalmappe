@@ -12,6 +12,7 @@ import no.fint.personalmappe.model.MongoDBPersonalmappe;
 import no.fint.personalmappe.repository.MongoDBRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import reactor.retry.Retry;
 import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Duration;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -122,8 +124,13 @@ public class ResponseHandlerService {
                 mongoDBPersonalmappe.setMessage(null);
                 save(mongoDBPersonalmappe);
                 break;
+            case UNAUTHORIZED:
+                mongoDBPersonalmappe.setStatus(HttpStatus.UNAUTHORIZED);
+                mongoDBPersonalmappe.setMessage(Optional.ofNullable(response.getRequest()).map(HttpRequest::toString).orElse(null));
+                save(mongoDBPersonalmappe);
+                break;
             default:
-                log.error("{} {}", response.getStatusCode(), response.getResponseBodyAsString());
+                log.error("{} {}", response.getStatusCode(), response.getRequest());
                 break;
         }
     }

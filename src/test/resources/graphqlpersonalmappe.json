@@ -1,0 +1,68 @@
+{
+  "data": {
+    "personalressurs": {
+      "arbeidsforhold": [
+        {
+          "gyldighetsperiode": {
+            "start": "2019-10-14T00:00:00",
+            "slutt": null
+          },
+          "hovedstilling": true,
+          "arbeidssted": {
+            "organisasjonsId": {
+              "identifikatorverdi": "organisasjonsid"
+            },
+            "organisasjonsKode": {
+              "identifikatorverdi": "organisasjonskode"
+            },
+            "leder": {
+              "ansattnummer": {
+                "identifikatorverdi": "ansattnummer-leder"
+              },
+              "brukernavn": {
+                "identifikatorverdi": "brukernavn-leder"
+              }
+            },
+            "overordnet": {
+              "organisasjonsId": {
+                "identifikatorverdi": "overordnet-organisasjonsid"
+              },
+              "organisasjonsKode": {
+                "identifikatorverdi": "overordnet-organisajonskode"
+              },
+              "leder": {
+                "ansattnummer": {
+                  "identifikatorverdi": "ansattnummer-overordnet-leder"
+                },
+                "brukernavn": {
+                  "identifikatorverdi": "brukernavn-overordnet-leder"
+                }
+              }
+            }
+          },
+          "personalressurs": {
+            "ansattnummer": {
+              "identifikatorverdi": "ansattnummer"
+            },
+            "brukernavn": {
+              "identifikatorverdi": "brukernavn"
+            },
+            "person": {
+              "fodselsnummer": {
+                "identifikatorverdi": "fodselsnummer"
+              },
+              "navn": {
+                "fornavn": "fornavn",
+                "mellomnavn": "mellomnavn",
+                "etternavn": "etternavn"
+              }
+            },
+            "personalressurskategori": {
+              "kode": "F"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
