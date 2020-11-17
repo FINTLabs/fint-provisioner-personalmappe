@@ -1,5 +1,8 @@
 package no.fint.personalmappe.configuration;
 
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ClientHttpConnector;
@@ -19,6 +22,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +76,13 @@ public class SecurityConfiguration {
 
     @Bean
     public ClientHttpConnector clientHttpConnector() {
-        return new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.newConnection()));
+        HttpClient httpClient = HttpClient.create(ConnectionProvider.builder("laidback").maxLifeTime(Duration.ofHours(6)).maxIdleTime(Duration.ofMinutes(5)).build())
+                .tcpConfiguration(tcpClient -> tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 300000)
+                        .doOnConnected(connection -> connection
+                                .addHandlerLast(new ReadTimeoutHandler(120))
+                                .addHandlerLast(new WriteTimeoutHandler(120))));
+
+        return new ReactorClientHttpConnector(httpClient);
     }
 
     @Bean

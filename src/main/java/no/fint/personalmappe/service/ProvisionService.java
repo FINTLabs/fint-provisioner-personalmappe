@@ -128,11 +128,11 @@ public class ProvisionService {
                                 .findAny()
                                 .map(uri -> fintRepository.putForEntity(orgId, arkivressurs, uri))
                                 .orElseGet(Mono::empty))
-                .onErrorContinue((e,r) -> log.info("{}: Error on {}", orgId, r))
+                .onErrorContinue((e, r) -> log.info("{}: Error on {}", orgId, r))
                 .handle(transformNullable(r -> r.getHeaders().getLocation()))
                 .delayElements(Duration.ofSeconds(10))
                 .flatMap(uri -> fintRepository.headForEntity(orgId, uri))
-                .onErrorContinue((e,r) -> log.info("{}: Error on {}", orgId, r))
+                .onErrorContinue((e, r) -> log.info("{}: Error on {}", orgId, r))
                 .doOnNext(it -> log.info("{}: Arkivressurs: {} {}", orgId, it.getStatusCode(), it.getHeaders().getLocation()))
                 .count()
                 .subscribe(it -> log.info("{}: Updated {} Arkivressurs objects.", orgId, it));
@@ -196,6 +196,7 @@ public class ProvisionService {
                     MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.handleStatusOnNew(orgId, id, username);
                     getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
                 })
+                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", username, clientResponse.getMessage()))
                 .subscribe();
     }
 
@@ -205,6 +206,7 @@ public class ProvisionService {
                     responseHandlerService.handleStatus(mongoDBPersonalmappe);
                     getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
                 })
+                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", PersonnelUtilities.getUsername(personalmappeResource), clientResponse.getMessage()))
                 .subscribe();
     }
 
@@ -215,14 +217,14 @@ public class ProvisionService {
                     responseHandlerService.handleStatus(mongoDBPersonalmappe);
                     getForResource(mongoDBPersonalmappe, responseEntity.getHeaders().getLocation());
                 })
+                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", PersonnelUtilities.getUsername(personalmappeResource), clientResponse.getMessage()))
                 .subscribe();
     }
 
     private void getForResource(MongoDBPersonalmappe mongoDBPersonalmappe, URI location) {
         fintRepository.getForEntity(mongoDBPersonalmappe.getOrgId(), Object.class, location)
                 .doOnSuccess(responseEntity -> responseHandlerService.handleResource(responseEntity, mongoDBPersonalmappe))
-                .doOnError(WebClientResponseException.class,
-                        clientResponse -> responseHandlerService.handleError(clientResponse, mongoDBPersonalmappe))
+                .doOnError(WebClientResponseException.class, clientResponse -> responseHandlerService.handleError(clientResponse, mongoDBPersonalmappe))
                 .retryWhen(Retry.withThrowable(responseHandlerService.finalStatusPending))
                 .subscribe();
     }
