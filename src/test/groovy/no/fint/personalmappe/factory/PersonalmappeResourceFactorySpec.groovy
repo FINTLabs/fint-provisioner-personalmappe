@@ -29,7 +29,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
     def "given valid arbeidsforhold return true"() {
         given:
         def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'F', true,
-                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
+                LocalDateTime.now().plusDays(14), LocalDateTime.now().plusDays(20))
 
         when:
         def valid = personalmappeResourceFactory.validArbeidsforhold().test('orgId', arbeidsforhold)
@@ -65,7 +65,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
     def "given arbeidsforhold with invalid gyldighetsperiode return false"() {
         given:
         def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'F', true,
-                LocalDateTime.now().minusDays(2), LocalDateTime.now().minusDays(1))
+                LocalDateTime.now().plusDays(15), LocalDateTime.now().plusDays(20))
 
         when:
         def valid = personalmappeResourceFactory.validArbeidsforhold().test('orgId', arbeidsforhold)

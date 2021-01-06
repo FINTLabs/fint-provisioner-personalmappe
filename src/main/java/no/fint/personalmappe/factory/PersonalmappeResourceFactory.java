@@ -127,10 +127,10 @@ public class PersonalmappeResourceFactory {
             if (arbeidsforhold == null || arbeidsforhold.getGyldighetsperiode() == null) return false;
 
             if (arbeidsforhold.getGyldighetsperiode().getSlutt() == null) {
-                return now.isAfter(arbeidsforhold.getGyldighetsperiode().getStart());
+                return now.plusWeeks(2).isAfter(arbeidsforhold.getGyldighetsperiode().getStart());
             } else {
                 return now.isBefore(arbeidsforhold.getGyldighetsperiode().getSlutt())
-                        && now.isAfter(arbeidsforhold.getGyldighetsperiode().getStart());
+                        && now.plusWeeks(2).isAfter(arbeidsforhold.getGyldighetsperiode().getStart());
             }
         };
     }
