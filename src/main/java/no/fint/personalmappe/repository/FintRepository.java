@@ -58,11 +58,12 @@ public class FintRepository {
     public <T> Mono<T> getUpdates(String orgId, Class<T> clazz, URI uri) {
         Long since = sinceTimestamp.getOrDefault(orgId, 0L);
 
-        get(orgId, LastUpdated.class, UriComponentsBuilder.fromUri(uri).pathSegment("last-updated").build().toUri())
-                .blockOptional()
-                .ifPresent(upd -> sinceTimestamp.put(orgId, upd.getLastUpdated()));
+        return get(orgId, LastUpdated.class, UriComponentsBuilder.fromUri(uri).pathSegment("last-updated").build().toUri())
+                .flatMap(lastUpdated -> {
+                    sinceTimestamp.put(orgId, lastUpdated.getLastUpdated());
 
-        return get(orgId, clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
+                    return get(orgId, clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
+                });
     }
 
     public <T> Mono<ResponseEntity<T>> getForEntity(String orgId, Class<T> clazz, URI uri) {

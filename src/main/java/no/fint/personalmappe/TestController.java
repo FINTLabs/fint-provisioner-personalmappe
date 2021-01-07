@@ -10,6 +10,7 @@ import java.net.URI;
 @Slf4j
 @RestController
 public class TestController {
+    private int count = 0;
 
     @PostMapping("/post")
     public ResponseEntity<?> dummyPost() {
@@ -25,4 +26,19 @@ public class TestController {
     public ResponseEntity<?> dummyStatus() {
         return ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("http://localhost:8080/put")).build();
     }
+
+    /*
+    @GetMapping("/status")
+    public ResponseEntity<?> dummyStatus() {
+        count++;
+
+        if (count < 7) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            count = 0;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).location(URI.create("http://localhost:8080/put")).build();
+        }
+    }
+
+     */
 }

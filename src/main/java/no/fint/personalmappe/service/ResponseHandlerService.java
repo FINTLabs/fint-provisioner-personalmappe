@@ -2,17 +2,15 @@ package no.fint.personalmappe.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.MongoBulkWriteException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResources;
 import no.fint.personalmappe.exception.FinalStatusPendingException;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
-import no.fint.personalmappe.repository.MongoDBRepository;
+import no.fint.personalmappe.utilities.PersonnelUtilities;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,12 +20,10 @@ import reactor.retry.Retry;
 import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Duration;
-import java.util.Optional;
 
 @Slf4j
 @Service
 public class ResponseHandlerService {
-
     @Value("${fint.status-pending.backoff:1}")
     private long backoff;
 
@@ -37,9 +33,8 @@ public class ResponseHandlerService {
     @Value("${fint.status-pending.timeout:30}")
     private long timeout;
 
-
-    private final MongoDBRepository mongoDBRepository;
-    public Retry<?> finalStatusPending;
+    @Getter
+    private Retry<?> finalStatusPending;
 
     @PostConstruct
     public void init() {
@@ -49,90 +44,75 @@ public class ResponseHandlerService {
                 .doOnRetry(exception -> log.info("{}", exception));
     }
 
-    public ResponseHandlerService(MongoDBRepository mongoDBRepository) {
-        this.mongoDBRepository = mongoDBRepository;
+    public MongoDBPersonalmappe pendingHandler(String orgId, String id, PersonalmappeResource personalmappeResource) {
+        return MongoDBPersonalmappe.builder()
+                .id(id)
+                .orgId(orgId)
+                .username(PersonnelUtilities.getUsername(personalmappeResource))
+                .leader(PersonnelUtilities.getLeader(personalmappeResource))
+                .workplace(PersonnelUtilities.getWorkplace(personalmappeResource))
+                .status(HttpStatus.ACCEPTED)
+                .build();
     }
 
-    private MongoDBPersonalmappe save(MongoDBPersonalmappe mongoDBPersonalmappe) {
-        try {
-            return mongoDBRepository.save(mongoDBPersonalmappe);
-        } catch (OptimisticLockingFailureException | MongoBulkWriteException e) {
-            log.error("{} -> {}", e.getMessage(), mongoDBPersonalmappe);
-        }
+    public MongoDBPersonalmappe pendingHandler(MongoDBPersonalmappe mongoDBPersonalmappe, PersonalmappeResource personalmappeResource) {
+        mongoDBPersonalmappe.setUsername(PersonnelUtilities.getUsername(personalmappeResource));
+        mongoDBPersonalmappe.setLeader(PersonnelUtilities.getLeader(personalmappeResource));
+        mongoDBPersonalmappe.setWorkplace(PersonnelUtilities.getWorkplace(personalmappeResource));
+        mongoDBPersonalmappe.setStatus(HttpStatus.ACCEPTED);
+        mongoDBPersonalmappe.setMessage(null);
+
         return mongoDBPersonalmappe;
     }
 
-    public MongoDBPersonalmappe handleStatusOnNew(String orgId, String id, String username) {
-        return save(MongoDBPersonalmappe.builder()
-                .id(id)
-                .username(username)
-                .orgId(orgId)
-                .status(HttpStatus.ACCEPTED)
-                .build());
-    }
-
-    public void handleStatus(MongoDBPersonalmappe mongoDBPersonalmappe) {
-        mongoDBPersonalmappe.setStatus(HttpStatus.ACCEPTED);
+    public MongoDBPersonalmappe successHandler(MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Object> responseEntity) {
+        mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
+        mongoDBPersonalmappe.setAssociation(responseEntity.getHeaders().getLocation());
         mongoDBPersonalmappe.setMessage(null);
-        save(mongoDBPersonalmappe);
+
+        return mongoDBPersonalmappe;
     }
 
-    public void handleResource(ResponseEntity<Object> responseEntity, MongoDBPersonalmappe mongoDBPersonalmappe) {
-        if (responseEntity.getStatusCode().is3xxRedirection()) {
-              mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
-              mongoDBPersonalmappe.setAssociation(responseEntity.getHeaders().getLocation());
-              mongoDBPersonalmappe.setMessage(null);
-              save(mongoDBPersonalmappe);
-        } else {
-            throw new FinalStatusPendingException();
-        }
-    }
-
-    public void handleError(WebClientResponseException response, MongoDBPersonalmappe mongoDBPersonalmappe) {
+    public MongoDBPersonalmappe errorHandler(WebClientResponseException response, MongoDBPersonalmappe mongoDBPersonalmappe) {
         switch (response.getStatusCode()) {
             case CONFLICT:
                 PersonalmappeResources personalmappeResources = new PersonalmappeResources();
                 try {
                     personalmappeResources = new ObjectMapper().readValue(response.getResponseBodyAsString(), PersonalmappeResources.class);
                 } catch (JsonProcessingException e) {
-                    log.error("{}", e.getMessage());
+                    mongoDBPersonalmappe.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+                    mongoDBPersonalmappe.setMessage(e.getMessage());
                 }
 
                 if (personalmappeResources.getTotalItems() == 1) {
                     mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
                     mongoDBPersonalmappe.setAssociation(getSelfLink(personalmappeResources.getContent().get(0)));
                     mongoDBPersonalmappe.setMessage(null);
-                    save(mongoDBPersonalmappe);
                 } else {
                     mongoDBPersonalmappe.setStatus(HttpStatus.CONFLICT);
                     mongoDBPersonalmappe.setMessage("More than one personalmappe in conflict");
-                    save(mongoDBPersonalmappe);
                 }
+
                 break;
             case BAD_REQUEST:
                 mongoDBPersonalmappe.setStatus(HttpStatus.BAD_REQUEST);
                 mongoDBPersonalmappe.setMessage(response.getResponseBodyAsString());
-                save(mongoDBPersonalmappe);
                 break;
             case INTERNAL_SERVER_ERROR:
                 mongoDBPersonalmappe.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
                 mongoDBPersonalmappe.setMessage(response.getResponseBodyAsString());
-                save(mongoDBPersonalmappe);
                 break;
             case GONE:
                 mongoDBPersonalmappe.setStatus(HttpStatus.GONE);
                 mongoDBPersonalmappe.setMessage(null);
-                save(mongoDBPersonalmappe);
-                break;
-            case UNAUTHORIZED:
-                mongoDBPersonalmappe.setStatus(HttpStatus.UNAUTHORIZED);
-                mongoDBPersonalmappe.setMessage(Optional.ofNullable(response.getRequest()).map(HttpRequest::toString).orElse(null));
-                save(mongoDBPersonalmappe);
                 break;
             default:
-                log.error("{} {}", response.getStatusCode(), response.getRequest());
+                mongoDBPersonalmappe.setStatus(response.getStatusCode());
+                mongoDBPersonalmappe.setMessage(response.getMessage());
                 break;
         }
+
+        return mongoDBPersonalmappe;
     }
 
     private URI getSelfLink(PersonalmappeResource personalmappeResource) {
