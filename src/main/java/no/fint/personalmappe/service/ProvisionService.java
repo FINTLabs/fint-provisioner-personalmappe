@@ -108,7 +108,7 @@ public class ProvisionService {
                 .flatMapIterable(AdministrativEnhetResources::getContent)
                 .collectList()
                 .blockOptional()
-                .orElseThrow(IllegalStateException::new);
+                .orElseThrow(IllegalArgumentException::new);
 
         administrativEnhetResources.stream()
                 .map(AdministrativEnhetResource::getSystemId)
@@ -119,7 +119,7 @@ public class ProvisionService {
                 .flatMapIterable(PersonalressursResources::getContent)
                 .collectList()
                 .blockOptional()
-                .orElseThrow(IllegalStateException::new);
+                .orElseThrow(IllegalArgumentException::new);
 
         if (organisation.isArkivressurs()) {
             log.info("{}: Updating Arkivressurs objects...", orgId);
