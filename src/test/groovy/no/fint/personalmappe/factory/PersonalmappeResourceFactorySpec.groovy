@@ -1,214 +1,157 @@
 package no.fint.personalmappe.factory
 
-import groovy.util.logging.Slf4j
 import no.fint.model.administrasjon.organisasjon.Organisasjonselement
 import no.fint.model.administrasjon.personal.Personalressurs
 import no.fint.model.felles.Person
-import no.fint.model.felles.kompleksedatatyper.Personnavn
 import no.fint.model.resource.Link
-import no.fint.model.resource.administrasjon.arkiv.PartsinformasjonResource
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
 import no.fint.personalmappe.model.GraphQLPersonalmappe
-import no.fint.personalmappe.properties.OrganisationProperties
-import reactor.test.StepVerifier
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 
-@Slf4j
 class PersonalmappeResourceFactorySpec extends Specification {
-
-    OrganisationProperties organisationProperties = Mock {
-        getOrganisations() >> ['orgId': new OrganisationProperties.Organisation(
-                personalressurskategori: ['F', 'M']
-        )]
-    }
-
-    PersonalmappeResourceFactory personalmappeResourceFactory = new PersonalmappeResourceFactory(organisationProperties)
-
-    def "given valid arbeidsforhold return true"() {
-        given:
-        def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'F', true,
-                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
-
-        when:
-        def valid = personalmappeResourceFactory.validArbeidsforhold().test('orgId', arbeidsforhold)
-
-        then:
-        valid
-    }
-
-    def "given arbeidsforhold with invalid personalressurskategori return false"() {
-        given:
-        def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'Q', true,
-                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
-
-        when:
-        def valid = personalmappeResourceFactory.validArbeidsforhold().test('orgId', arbeidsforhold)
-
-        then:
-        !valid
-    }
-
-    def "given arbeidsforhold with invalid hovedstilling return false"() {
-        given:
-        def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'F', false,
-                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
-
-        when:
-        def valid = personalmappeResourceFactory.validArbeidsforhold().test('orgId', arbeidsforhold)
-
-        then:
-        !valid
-    }
-
-    def "given arbeidsforhold with invalid gyldighetsperiode return false"() {
-        given:
-        def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'F', true,
-                LocalDateTime.now().minusDays(2), LocalDateTime.now().minusDays(1))
-
-        when:
-        def valid = personalmappeResourceFactory.validArbeidsforhold().test('orgId', arbeidsforhold)
-
-        then:
-        !valid
-    }
-
-    def "given valid personalmapperesource return true"() {
-        given:
-        def personalmappe = getPersonalmappeResource('brukernavn', 'organisasjonsId', 'brukernavn-leder')
-
-        when:
-        def valid = personalmappeResourceFactory.validPersonalmappeResource().test(personalmappe)
-
-        then:
-        valid
-    }
-
-    def "given personalmapperesource with invalid leder return false"() {
-        given:
-        def personalmappe = getPersonalmappeResource('brukernavn', 'organisasjonsId', 'brukernavn')
-
-        when:
-        def valid = personalmappeResourceFactory.validPersonalmappeResource().test(personalmappe)
-
-        then:
-        !valid
-    }
-
-    def "given personalmapperesource with missing fields or attributes return false"() {
-        given:
-        def personalmappe = getPersonalmappeResource('brukernavn', 'organisasjonsId', 'brukernavn-leder')
-        personalmappe.personalressurs.clear()
-
-        when:
-        def valid = personalmappeResourceFactory.validPersonalmappeResource().test(personalmappe)
-
-        then:
-        !valid
-    }
+    PersonalmappeResourceFactory personalmappeResourceFactory = new PersonalmappeResourceFactory()
 
     def "given valid arbeidsforhold return personalmapperesource"() {
         given:
-        def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'F', true,
-                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
-        def personalmappe = getPersonalmappeResource('brukernavn', 'organisasjonsId', 'brukernavn-leder')
+        def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource('orgId', arbeidsforhold, ['organisasjonsId'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, ['F', 'M'] as String[], ['organisasjonsid'])
 
         then:
-        StepVerifier.create(resource).expectNext(personalmappe).verifyComplete()
+        resource.navn.fornavn == 'fornavn'
+        resource.navn.mellomnavn == 'mellomnavn'
+        resource.navn.etternavn == 'etternavn'
+        resource.part.size() == 1
+        resource.tittel == 'DUMMY'
+        resource.person.first() == Link.with(Person.class, 'fodselsnummer', 'fodselsnummer')
+        resource.personalressurs.first() == Link.with(Personalressurs.class, 'brukernavn', 'brukernavn')
+        resource.arbeidssted.first() == Link.with(Organisasjonselement.class, 'organisasjonsid', 'organisasjonsid')
+        resource.leder.first() == Link.with(Personalressurs.class, 'brukernavn', 'brukernavn-leder')
     }
 
-    def "given invalid arbeidsforhold return empty mono"() {
+    def "given arbeidsforhold with invalid administrative unit return personalmapperesource with leaders leader"() {
         given:
-        def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'F', true,
-                LocalDateTime.now().minusDays(1), LocalDateTime.now().minusDays(1))
+        def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource('orgId', arbeidsforhold, ['organisasjonsId'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, ['F', 'M'] as String[], ['organisasjonsid-2'])
 
         then:
-        StepVerifier.create(resource).verifyComplete()
+        resource.navn.fornavn == 'fornavn'
+        resource.navn.mellomnavn == 'mellomnavn'
+        resource.navn.etternavn == 'etternavn'
+        resource.part.size() == 1
+        resource.tittel == 'DUMMY'
+        resource.person.first() == Link.with(Person.class, 'fodselsnummer', 'fodselsnummer')
+        resource.personalressurs.first() == Link.with(Personalressurs.class, 'brukernavn', 'brukernavn')
+        resource.arbeidssted.first() == Link.with(Organisasjonselement.class, 'organisasjonsid', 'organisasjonsid-leder-leder')
+        resource.leder.first() == Link.with(Personalressurs.class, 'brukernavn', 'brukernavn-leder-leder')
     }
 
-    def "given valid arbeidsforhold and invalid administrativenhet return personalmapperesource with leders leder"() {
-        def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn-leder', 'F', true,
-                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
-        def personalmappe = getPersonalmappeResource('brukernavn', 'organisasjonsId-leder', 'brukernavn-leders-leder')
+    def "given arbeidsforhold with invalid leader return personalmapperesource with leaders leader"() {
+        given:
+        def personalressurs = getPersonalressurs('brukernavn', 'brukernavn', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource('orgId', arbeidsforhold, [null])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, ['F', 'M'] as String[], ['organisasjonsid'])
 
         then:
-        StepVerifier.create(resource).expectNext(personalmappe).verifyComplete()
+        resource.navn.fornavn == 'fornavn'
+        resource.navn.mellomnavn == 'mellomnavn'
+        resource.navn.etternavn == 'etternavn'
+        resource.part.size() == 1
+        resource.tittel == 'DUMMY'
+        resource.person.first() == Link.with(Person.class, 'fodselsnummer', 'fodselsnummer')
+        resource.personalressurs.first() == Link.with(Personalressurs.class, 'brukernavn', 'brukernavn')
+        resource.arbeidssted.first() == Link.with(Organisasjonselement.class, 'organisasjonsid', 'organisasjonsid-leder-leder')
+        resource.leder.first() == Link.with(Personalressurs.class, 'brukernavn', 'brukernavn-leder-leder')
     }
 
-    def "given valid arbeidsforhold and personalressurs is leder return personalmapperesource with leders leder"() {
-        def arbeidsforhold = getArbeidsforhold('brukernavn', 'brukernavn','F', true,
-                LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
-        def personalmappe = getPersonalmappeResource('brukernavn', 'organisasjonsId-leder', 'brukernavn-leders-leder')
+    def "given arbeidsforhold with invalid personalressurskategori return null"() {
+        given:
+        def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'X', true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource('orgId', arbeidsforhold, [])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, ['F', 'M'] as String[], ['organisasjonsid'])
 
         then:
-        StepVerifier.create(resource).expectNext(personalmappe).verifyComplete()
+        resource.tittel == null
     }
 
-    PersonalmappeResource getPersonalmappeResource(String brukernavn, String organisajonsId, String brukernavnLeder) {
-        PersonalmappeResource resource = new PersonalmappeResource()
-        Personnavn personnavn = new Personnavn()
-        personnavn.setFornavn('fornavn')
-        personnavn.setMellomnavn('mellomnavn')
-        personnavn.setEtternavn('etternavn')
-        resource.setNavn(personnavn)
-        resource.setPart(Collections.singletonList(new PartsinformasjonResource()))
-        resource.setTittel("DUMMY")
-        resource.addPerson(Link.with(Person.class, 'fodselsnummer', 'fodselsnummer'))
-        resource.addPersonalressurs(Link.with(Personalressurs.class, 'brukernavn', brukernavn))
-        resource.addArbeidssted(Link.with(Organisasjonselement.class, 'organisasjonsid', organisajonsId))
-        resource.addLeder(Link.with(Personalressurs.class, 'brukernavn', brukernavnLeder))
-        return resource
+    def "given arbeidsforhold with invalid hovedstilling return null"() {
+        given:
+        def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'F', false, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
+
+        when:
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, ['F', 'M'] as String[], ['organisasjonsid'])
+
+        then:
+        resource.tittel == null
     }
 
-    GraphQLPersonalmappe.Arbeidsforhold getArbeidsforhold(String brukernavn, String brukernavnLeder, String personalressurskategori, boolean hovedstilling,
-    LocalDateTime start, LocalDateTime slutt) {
-        return new GraphQLPersonalmappe.Arbeidsforhold(
-                arbeidssted: new GraphQLPersonalmappe.Organisasjonselement(
-                        organisasjonsId: new GraphQLPersonalmappe.Identifikator(
-                                identifikatorverdi: 'organisasjonsId'),
-                        leder: new GraphQLPersonalmappe.Personalressurs(
-                                brukernavn: new GraphQLPersonalmappe.Identifikator(
-                                        identifikatorverdi: brukernavnLeder)),
-                        overordnet: new GraphQLPersonalmappe.Organisasjonselement(
+    def "given arbeidsforhold with invalid gyldighetsperiode return null"() {
+        given:
+        def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().plusDays(15), LocalDateTime.now().plusDays(20))
+
+        when:
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, ['F', 'M'] as String[], ['organisasjonsid'])
+
+        then:
+        resource.tittel == null
+    }
+
+    def "given two valid arbeidsforhold return personalmapperesource with earliest start date"() {
+        given:
+        def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder-1', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().plusDays(5), LocalDateTime.now().plusDays(20))
+        personalressurs.arbeidsforhold.push(getPersonalressurs('brukernavn', 'brukernavn-leder-2', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().plusDays(10), LocalDateTime.now().plusDays(20)).arbeidsforhold.first())
+
+        when:
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, ['F', 'M'] as String[], ['organisasjonsid'])
+
+        then:
+        resource.leder.first() == Link.with(Personalressurs.class, 'brukernavn', 'brukernavn-leder-1')
+    }
+
+    GraphQLPersonalmappe.Personalressurs getPersonalressurs(String brukernavn, String brukernavnLeder, String brukernavnLederLeder, String organisasjonsId,
+                                                            String personalressurskategori, boolean hovedstilling, LocalDateTime start, LocalDateTime slutt) {
+        return new GraphQLPersonalmappe.Personalressurs(
+                arbeidsforhold: [new GraphQLPersonalmappe.Arbeidsforhold(
+                        arbeidssted: new GraphQLPersonalmappe.Organisasjonselement(
                                 organisasjonsId: new GraphQLPersonalmappe.Identifikator(
-                                        identifikatorverdi: 'organisasjonsId-leder'),
+                                        identifikatorverdi: organisasjonsId),
                                 leder: new GraphQLPersonalmappe.Personalressurs(
                                         brukernavn: new GraphQLPersonalmappe.Identifikator(
-                                                identifikatorverdi: 'brukernavn-leders-leder')))),
-                personalressurs: new GraphQLPersonalmappe.Personalressurs(
-                        brukernavn: new GraphQLPersonalmappe.Identifikator(
-                                identifikatorverdi: brukernavn),
-                        person: new GraphQLPersonalmappe.Person(
-                                fodselsnummer: new GraphQLPersonalmappe.Identifikator(
-                                        identifikatorverdi: 'fodselsnummer'),
-                                navn: new GraphQLPersonalmappe.Navn(
-                                        fornavn: 'fornavn',
-                                        mellomnavn: 'mellomnavn',
-                                        etternavn: 'etternavn'
+                                                identifikatorverdi: brukernavnLeder)),
+                                overordnet: new GraphQLPersonalmappe.Organisasjonselement(
+                                        organisasjonsId: new GraphQLPersonalmappe.Identifikator(
+                                                identifikatorverdi: 'organisasjonsid-leder-leder'),
+                                        leder: new GraphQLPersonalmappe.Personalressurs(
+                                                brukernavn: new GraphQLPersonalmappe.Identifikator(
+                                                        identifikatorverdi: brukernavnLederLeder)))),
+                        personalressurs: new GraphQLPersonalmappe.Personalressurs(
+                                brukernavn: new GraphQLPersonalmappe.Identifikator(
+                                        identifikatorverdi: brukernavn),
+                                person: new GraphQLPersonalmappe.Person(
+                                        fodselsnummer: new GraphQLPersonalmappe.Identifikator(
+                                                identifikatorverdi: 'fodselsnummer'),
+                                        navn: new GraphQLPersonalmappe.Navn(
+                                                fornavn: 'fornavn',
+                                                mellomnavn: 'mellomnavn',
+                                                etternavn: 'etternavn'
+                                        )
+                                ),
+                                personalressurskategori: new GraphQLPersonalmappe.Personalressurskategori(
+                                        kode: personalressurskategori
                                 )
                         ),
-                        personalressurskategori: new GraphQLPersonalmappe.Personalressurskategori(
-                                kode: personalressurskategori
-                        )
-                ),
-                gyldighetsperiode: new GraphQLPersonalmappe.Periode(
-                        start: start,
-                        slutt: slutt
-                ),
-                hovedstilling: hovedstilling
+                        gyldighetsperiode: new GraphQLPersonalmappe.Periode(
+                                start: start,
+                                slutt: slutt
+                        ),
+                        hovedstilling: hovedstilling
+                )]
         )
     }
 }

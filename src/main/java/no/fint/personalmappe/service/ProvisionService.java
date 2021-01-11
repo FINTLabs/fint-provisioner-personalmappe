@@ -41,6 +41,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -70,15 +71,13 @@ public class ProvisionService {
     private final ResponseHandlerService responseHandlerService;
     private final MongoDBRepository mongoDBRepository;
     private final OrganisationProperties organisationProperties;
-    private final PersonalmappeResourceFactory personalmappeResourceFactory;
     private final PolicyService policyService;
 
-    public ProvisionService(FintRepository fintRepository, ResponseHandlerService responseHandlerService, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, PersonalmappeResourceFactory personalmappeResourceFactory, PolicyService policyService) {
+    public ProvisionService(FintRepository fintRepository, ResponseHandlerService responseHandlerService, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, PolicyService policyService) {
         this.fintRepository = fintRepository;
         this.responseHandlerService = responseHandlerService;
         this.organisationProperties = organisationProperties;
         this.mongoDBRepository = mongoDBRepository;
-        this.personalmappeResourceFactory = personalmappeResourceFactory;
         this.policyService = policyService;
     }
 
@@ -139,7 +138,7 @@ public class ProvisionService {
         Flux.fromIterable(usernames)
                 .limitRequest(limit == 0 ? usernames.size() : limit)
                 .delayElements(Duration.ofMillis(1000))
-                .flatMap(username -> getPersonalmappeResource(orgId, username))
+                .flatMap(username -> getPersonalmappeResource(orgId,  username, organisation))
                 .subscribe(personalmappeResource -> provision(orgId, personalmappeResource));
     }
 
@@ -172,23 +171,18 @@ public class ProvisionService {
         return (element, sink) -> Optional.ofNullable(mapper.apply(element)).ifPresent(sink::next);
     }
 
-    public Mono<PersonalmappeResource> getPersonalmappeResource(String orgId, String username) {
+    public Mono<PersonalmappeResource> getPersonalmappeResource(String orgId, String username, OrganisationProperties.Organisation organisation) {
         GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPHQL_QUERY, Collections.singletonMap("brukernavn", username));
 
         return fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
+                .map(GraphQLPersonalmappe::getResult)
+                .map(GraphQLPersonalmappe.Result::getPersonalressurs)
+                .map(personalressurs -> PersonalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation.getPersonalressurskategori(), administrativeEnheter.get(orgId)))
+                .filter(validPersonalmappeResource)
                 .onErrorResume(error -> {
                     log.error("{} - {}", username, error.getMessage());
                     return Mono.empty();
-                })
-                .map(GraphQLPersonalmappe::getResult)
-                .map(GraphQLPersonalmappe.Result::getPersonalressurs)
-                .flatMapIterable(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
-                .onErrorResume(error -> {
-                    log.error("{} - {}", username, error.getMessage());
-                    return Flux.empty();
-                })
-                .flatMap(arbeidsforhold -> personalmappeResourceFactory.toPersonalmappeResource(orgId, arbeidsforhold, administrativeEnheter.get(orgId)))
-                .singleOrEmpty();
+                });
     }
 
     public void provision(String orgId, PersonalmappeResource personalmappeResource) {
@@ -266,4 +260,18 @@ public class ProvisionService {
             log.error("{} -> {}", e.getMessage(), mongoDBPersonalmappe);
         }
     }
+
+
+    private final Predicate<PersonalmappeResource> validPersonalmappeResource = personalmappeResource -> {
+        if (Objects.nonNull(personalmappeResource.getNavn()) && !personalmappeResource.getPersonalressurs().isEmpty() && !personalmappeResource.getPerson().isEmpty() && !personalmappeResource.getArbeidssted().isEmpty() && !personalmappeResource.getLeder().isEmpty()) {
+            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
+                log.trace("Identical subject and leader for personalmappe: {}", PersonnelUtilities.getUsername(personalmappeResource));
+
+                return false;
+            }
+            return true;
+        }
+
+        return false;
+    };
 }

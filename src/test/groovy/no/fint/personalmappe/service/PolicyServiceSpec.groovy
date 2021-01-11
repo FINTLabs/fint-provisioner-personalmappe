@@ -8,7 +8,7 @@ import spock.lang.Specification
 class PolicyServiceSpec extends Specification {
 
     String simplePolicy = "function simplePolicy(object) {return object;}"
-    PersonalmappeResource personalmappeResource;
+    PersonalmappeResource personalmappeResource
     PolicyService service
 
     void setup() {

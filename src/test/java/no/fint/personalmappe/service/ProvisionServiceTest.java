@@ -8,10 +8,10 @@ import no.fint.model.felles.kompleksedatatyper.Personnavn;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.arkiv.PartsinformasjonResource;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
-import no.fint.personalmappe.factory.PersonalmappeResourceFactory;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
 import no.fint.personalmappe.model.GraphQLQuery;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
+import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.FintRepository;
 import no.fint.personalmappe.repository.MongoDBRepository;
 import no.fint.personalmappe.utilities.PersonnelUtilities;
@@ -45,12 +45,6 @@ public class ProvisionServiceTest {
     @Value("${fint.endpoints.personalmappe}")
     private URI personalmappeEndpoint;
 
-    @Value("${fint.endpoints.arkivressurs}")
-    private URI arkivressursEndpoint;
-
-    @Value("${fint.endpoints.administrativ-enhet}")
-    private URI administrativEnhetEndpoint;
-
     @Value("${fint.endpoints.graphql}")
     private URI graphqlEndpoint;
 
@@ -63,30 +57,25 @@ public class ProvisionServiceTest {
     @MockBean
     private FintRepository fintRepository;
 
-    @MockBean
-    private PersonalmappeResourceFactory personalmappeResourceFactory;
-
     @Before
     public void setup() {
+        provisionService.getAdministrativeEnheter().put("org-id", "organisasjonsid");
+
         mongoDBRepository.deleteAll();
     }
 
     @Test
     public void getPersonalmappeResource_ValidGraphQLPersonalmappe_ReturnPersonalmappeResourceMono() throws IOException {
-        GraphQLPersonalmappe graphQLPersonalmappe = new ObjectMapper().findAndRegisterModules()
-                .readValue(getClass().getClassLoader().getResource("graphqlpersonalmappe.json"), GraphQLPersonalmappe.class);
+        OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation();
+        organisation.setPersonalressurskategori(new String[]{"F", "M"});
 
-        GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold = graphQLPersonalmappe.getResult().getPersonalressurs().getArbeidsforhold().get(0);
+        GraphQLPersonalmappe graphQLPersonalmappe = new ObjectMapper().findAndRegisterModules().readValue(getClass().getClassLoader().getResource("graphqlpersonalmappe.json"), GraphQLPersonalmappe.class);
 
         GraphQLQuery graphQLQuery = new GraphQLQuery(ProvisionService.GRAPHQL_QUERY, Collections.singletonMap("brukernavn", "brukernavn"));
 
-        when(fintRepository.post("org-id", GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint))
-                .thenReturn(Mono.just(graphQLPersonalmappe));
+        when(fintRepository.post("org-id", GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)).thenReturn(Mono.just(graphQLPersonalmappe));
 
-        when(personalmappeResourceFactory.toPersonalmappeResource("org-id", arbeidsforhold, Collections.emptyList()))
-                .thenReturn(Mono.just(newPersonalmappeResource()));
-
-        Mono<PersonalmappeResource> personalmappeResource = provisionService.getPersonalmappeResource("org-id", "brukernavn");
+        Mono<PersonalmappeResource> personalmappeResource = provisionService.getPersonalmappeResource("org-id", "brukernavn", organisation);
 
         StepVerifier
                 .create(personalmappeResource)
@@ -97,19 +86,22 @@ public class ProvisionServiceTest {
                         resource.getTittel().equals("DUMMY") &&
                         resource.getPerson().contains(Link.with(Person.class, "fodselsnummer", "fodselsnummer")) &&
                         resource.getPersonalressurs().contains(Link.with(Personalressurs.class, "brukernavn", "brukernavn")) &&
-                        resource.getArbeidssted().contains(Link.with(Organisasjonselement.class, "organisasjonsid", "organisajonsid")) &&
+                        resource.getArbeidssted().contains(Link.with(Organisasjonselement.class, "organisasjonsid", "organisasjonsid")) &&
                         resource.getLeder().contains(Link.with(Personalressurs.class, "brukernavn", "brukernavn-leder")))
                 .verifyComplete();
     }
 
     @Test
     public void getPersonalmappeResource_InvalidGraphQLPersonalmappe_ReturnEmptyMono() {
+        OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation();
+        organisation.setPersonalressurskategori(new String[]{"F", "M"});
+
         GraphQLQuery graphQLQuery = new GraphQLQuery(ProvisionService.GRAPHQL_QUERY, Collections.singletonMap("brukernavn", "brukernavn"));
 
         when(fintRepository.post("org-id", GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint))
                 .thenReturn(Mono.just(new GraphQLPersonalmappe()));
 
-        Mono<PersonalmappeResource> test = provisionService.getPersonalmappeResource("org-id", "brukernavn");
+        Mono<PersonalmappeResource> test = provisionService.getPersonalmappeResource("org-id", "brukernavn", organisation);
 
         StepVerifier
                 .create(test)
@@ -118,12 +110,15 @@ public class ProvisionServiceTest {
 
     @Test
     public void getPersonalmappeResource_ExceptionThrown_ReturnEmptyMono() {
+        OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation();
+        organisation.setPersonalressurskategori(new String[]{"F", "M"});
+
         GraphQLQuery graphQLQuery = new GraphQLQuery(ProvisionService.GRAPHQL_QUERY, Collections.singletonMap("brukernavn", "brukernavn"));
 
         when(fintRepository.post("org-id", GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint))
                 .thenReturn(Mono.error(new WebClientResponseException(HttpStatus.SERVICE_UNAVAILABLE.value(), HttpStatus.SERVICE_UNAVAILABLE.name(), null, null, null)));
 
-        Mono<PersonalmappeResource> test = provisionService.getPersonalmappeResource("org-id", "brukernavn");
+        Mono<PersonalmappeResource> test = provisionService.getPersonalmappeResource("org-id", "brukernavn", organisation);
 
         StepVerifier
                 .create(test)

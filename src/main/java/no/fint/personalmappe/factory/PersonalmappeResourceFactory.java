@@ -1,6 +1,5 @@
 package no.fint.personalmappe.factory;
 
-import lombok.extern.slf4j.Slf4j;
 import no.fint.model.administrasjon.organisasjon.Organisasjonselement;
 import no.fint.model.administrasjon.personal.Personalressurs;
 import no.fint.model.felles.Person;
@@ -9,67 +8,55 @@ import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.arkiv.PartsinformasjonResource;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
-import no.fint.personalmappe.properties.OrganisationProperties;
-import no.fint.personalmappe.utilities.PersonnelUtilities;
-import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-@Slf4j
-@Component
 public class PersonalmappeResourceFactory {
-    private final OrganisationProperties organisationProperties;
 
-    public PersonalmappeResourceFactory(OrganisationProperties organisationProperties) {
-        this.organisationProperties = organisationProperties;
-    }
+    public static PersonalmappeResource toPersonalmappeResource(GraphQLPersonalmappe.Personalressurs personalressurs, String[] personalressurskategori, Collection<String> administrativEnheter) {
+        PersonalmappeResource personalmappeResource = new PersonalmappeResource();
 
-    public Mono<PersonalmappeResource> toPersonalmappeResource(String orgId, GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold,
-                                                               Collection<String> administrativEnheter) {
-        if (validArbeidsforhold().test(orgId, arbeidsforhold)) {
-            PersonalmappeResource resource = new PersonalmappeResource();
+        Optional<GraphQLPersonalmappe.Arbeidsforhold> arbeidsforhold = Optional.ofNullable(personalressurs)
+                .map(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
+                .orElseGet(Collections::emptyList)
+                .stream()
+                .filter(forhold -> validArbeidsforhold().test(forhold, personalressurskategori))
+                .min(Comparator.comparing(forhold -> Optional.ofNullable(forhold.getGyldighetsperiode())
+                        .map(GraphQLPersonalmappe.Periode::getStart)
+                        .orElse(LocalDateTime.MAX)));
 
-            getNavn(arbeidsforhold).ifPresent(resource::setNavn);
+        arbeidsforhold.ifPresent(forhold -> {
+            getNavn(forhold).ifPresent(personalmappeResource::setNavn);
+            getPerson(forhold).map(Link.apply(Person.class, "fodselsnummer")).ifPresent(personalmappeResource::addPerson);
+            getPersonalressurs(forhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(personalmappeResource::addPersonalressurs);
 
-            getPerson(arbeidsforhold).map(Link.apply(Person.class, "fodselsnummer")).ifPresent(resource::addPerson);
-
-            getPersonalressurs(arbeidsforhold).ifPresent(personalressurs -> {
-                resource.addPersonalressurs(Link.with(Personalressurs.class, "brukernavn", personalressurs));
-
-                getLeder(arbeidsforhold).ifPresent(leder -> {
-                    Optional<String> arbeidssted = getArbeidssted(arbeidsforhold);
-
-                    if (personalressurs.equalsIgnoreCase(leder) || !administrativEnheter.contains(arbeidssted.orElse(null))) {
-                        getLedersLeder(arbeidsforhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(resource::addLeder);
-                        getLedersArbeidssted(arbeidsforhold).map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(resource::addArbeidssted);
-                    } else {
-                        resource.addLeder(Link.with(Personalressurs.class, "brukernavn", leder));
-                        arbeidssted.map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(resource::addArbeidssted);
-                    }
-                });
+            getLeder(forhold).ifPresent(leder -> {
+                if (getPersonalressurs(forhold).filter(leder::equalsIgnoreCase).isPresent() || !getArbeidssted(forhold).filter(administrativEnheter::contains).isPresent()) {
+                    getLedersLeder(forhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(personalmappeResource::addLeder);
+                    getLedersArbeidssted(forhold).map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(personalmappeResource::addArbeidssted);
+                } else {
+                    personalmappeResource.addLeder(Link.with(Personalressurs.class, "brukernavn", leder));
+                    getArbeidssted(forhold).map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(personalmappeResource::addArbeidssted);
+                }
             });
 
-            resource.setPart(Collections.singletonList(new PartsinformasjonResource()));
-            resource.setTittel("DUMMY");
+            personalmappeResource.setPart(Collections.singletonList(new PartsinformasjonResource()));
+            personalmappeResource.setTittel("DUMMY");
+        });
 
-            if (validPersonalmappeResource().test(resource)) {
-                return Mono.just(resource);
-            }
-        }
-        return Mono.empty();
+        return personalmappeResource;
     }
 
-    private Optional<String> getPersonalressurs(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
+    private static Optional<String> getPersonalressurs(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
         return Optional.ofNullable(arbeidsforhold.getPersonalressurs())
                 .map(GraphQLPersonalmappe.Personalressurs::getBrukernavn)
                 .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi);
     }
 
-    private Optional<String> getPerson(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
+    private static Optional<String> getPerson(GraphQLPersonalmappe.Arbeidsforhold arbeidsforhold) {
         return Optional.ofNullable(arbeidsforhold.getPersonalressurs())
                 .map(GraphQLPersonalmappe.Personalressurs::getPerson)
                 .map(GraphQLPersonalmappe.Person::getFodselsnummer)
@@ -117,61 +104,37 @@ public class PersonalmappeResourceFactory {
                 .map(GraphQLPersonalmappe.Identifikator::getIdentifikatorverdi);
     }
 
-    public BiPredicate<String, GraphQLPersonalmappe.Arbeidsforhold> validArbeidsforhold() {
-        return (orgId, arbeidsforhold) ->
-                isActive().test(LocalDateTime.now(), arbeidsforhold) && isHovedstilling().test(arbeidsforhold) && hasPersonalressurskategori().test(orgId, arbeidsforhold);
+    private static BiPredicate<GraphQLPersonalmappe.Arbeidsforhold, String[]> validArbeidsforhold() {
+        return (arbeidsforhold, personalressurskategori) -> isActive().test(arbeidsforhold, LocalDateTime.now()) &&
+                isHovedstilling().test(arbeidsforhold) && hasPersonalressurskategori().test(arbeidsforhold, personalressurskategori);
     }
 
-    private BiPredicate<LocalDateTime, GraphQLPersonalmappe.Arbeidsforhold> isActive() {
-        return (now, arbeidsforhold) -> {
+    private static BiPredicate<GraphQLPersonalmappe.Arbeidsforhold, LocalDateTime> isActive() {
+        return (arbeidsforhold, now) -> {
             if (arbeidsforhold == null || arbeidsforhold.getGyldighetsperiode() == null) return false;
 
             if (arbeidsforhold.getGyldighetsperiode().getSlutt() == null) {
-                return now.isAfter(arbeidsforhold.getGyldighetsperiode().getStart());
+                return now.plusWeeks(2).isAfter(arbeidsforhold.getGyldighetsperiode().getStart());
             } else {
                 return now.isBefore(arbeidsforhold.getGyldighetsperiode().getSlutt())
-                        && now.isAfter(arbeidsforhold.getGyldighetsperiode().getStart());
+                        && now.plusWeeks(2).isAfter(arbeidsforhold.getGyldighetsperiode().getStart());
             }
         };
     }
 
-    private Predicate<GraphQLPersonalmappe.Arbeidsforhold> isHovedstilling() {
+    private static Predicate<GraphQLPersonalmappe.Arbeidsforhold> isHovedstilling() {
         return arbeidsforhold -> Optional.ofNullable(arbeidsforhold)
                 .map(GraphQLPersonalmappe.Arbeidsforhold::getHovedstilling)
                 .orElse(false);
     }
 
-    private BiPredicate<String, GraphQLPersonalmappe.Arbeidsforhold> hasPersonalressurskategori() {
-        return (orgId, arbeidsforhold) ->
-                Arrays.stream(organisationProperties.getOrganisations().get(orgId).getPersonalressurskategori())
-                        .anyMatch(category -> Optional.ofNullable(arbeidsforhold)
-                                .map(GraphQLPersonalmappe.Arbeidsforhold::getPersonalressurs)
-                                .map(GraphQLPersonalmappe.Personalressurs::getPersonalressurskategori)
-                                .map(GraphQLPersonalmappe.Personalressurskategori::getKode)
-                                .filter(category::equals)
-                                .isPresent());
-    }
-
-    public Predicate<PersonalmappeResource> validPersonalmappeResource() {
-        return personalmappeResource -> hasMandatoryFieldsAndRelations().test(personalmappeResource) &&
-                hasValidLeader().test(personalmappeResource);
-    }
-
-    private Predicate<PersonalmappeResource> hasMandatoryFieldsAndRelations() {
-        return personalmappeResource -> (!personalmappeResource.getPersonalressurs().isEmpty()
-                && !personalmappeResource.getPerson().isEmpty()
-                && !personalmappeResource.getArbeidssted().isEmpty()
-                && !personalmappeResource.getLeder().isEmpty()
-                && Objects.nonNull(personalmappeResource.getNavn()));
-    }
-
-    private Predicate<PersonalmappeResource> hasValidLeader() {
-        return personalmappeResource -> {
-            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
-                log.trace("Identical subject and leader for personalmappe: {}", PersonnelUtilities.getUsername(personalmappeResource));
-                return false;
-            }
-            return true;
-        };
+    private static BiPredicate<GraphQLPersonalmappe.Arbeidsforhold, String[]> hasPersonalressurskategori() {
+        return (arbeidsforhold, personalressurskategori) -> Arrays.stream(personalressurskategori)
+                .anyMatch(category -> Optional.ofNullable(arbeidsforhold)
+                        .map(GraphQLPersonalmappe.Arbeidsforhold::getPersonalressurs)
+                        .map(GraphQLPersonalmappe.Personalressurs::getPersonalressurskategori)
+                        .map(GraphQLPersonalmappe.Personalressurskategori::getKode)
+                        .filter(category::equals)
+                        .isPresent());
     }
 }

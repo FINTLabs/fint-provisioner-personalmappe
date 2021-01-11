@@ -46,12 +46,12 @@ public class ApiController {
 
     @GetMapping("/provisioning/username/{username}")
     public Mono<PersonalmappeResource> getPersonalmappeResourceAbleToBeProvisioned(@RequestHeader("x-orgid") String orgId, @PathVariable String username) {
-        return provisionService.getPersonalmappeResource(orgId, username);
+        return provisionService.getPersonalmappeResource(orgId, username, organisationProperties.getOrganisations().get(orgId));
     }
 
     @PostMapping("/provisioning/username/{username}")
     public Mono<ResponseEntity<PersonalmappeResource>> provisionPersonalmappeByUsername(@RequestHeader("x-orgid") String orgId, @PathVariable String username) {
-        return provisionService.getPersonalmappeResource(orgId, username)
+        return provisionService.getPersonalmappeResource(orgId, username, organisationProperties.getOrganisations().get(orgId))
                 .map(personalmappeResource -> {
                     provisionService.provision(orgId, personalmappeResource);
 

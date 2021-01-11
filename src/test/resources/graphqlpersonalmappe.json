@@ -4,7 +4,7 @@
       "arbeidsforhold": [
         {
           "gyldighetsperiode": {
-            "start": "2019-10-14T00:00:00",
+            "start": "2021-01-01T00:00:00",
             "slutt": null
           },
           "hovedstilling": true,
@@ -25,17 +25,17 @@
             },
             "overordnet": {
               "organisasjonsId": {
-                "identifikatorverdi": "overordnet-organisasjonsid"
+                "identifikatorverdi": "organisasjonsid-leder-leder"
               },
               "organisasjonsKode": {
-                "identifikatorverdi": "overordnet-organisajonskode"
+                "identifikatorverdi": "organisajonskode-leder-leder"
               },
               "leder": {
                 "ansattnummer": {
-                  "identifikatorverdi": "ansattnummer-overordnet-leder"
+                  "identifikatorverdi": "ansattnummer-leder-leder"
                 },
                 "brukernavn": {
-                  "identifikatorverdi": "brukernavn-overordnet-leder"
+                  "identifikatorverdi": "brukernavn-leder-leder"
                 }
               }
             }
