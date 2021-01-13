@@ -92,6 +92,28 @@ public class ProvisionServiceTest {
     }
 
     @Test
+    public void getPersonalmappeResource_InvalidLeaderGraphQLPersonalmappe_ReturnEmptyMono() throws IOException {
+        OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation();
+        organisation.setPersonalressurskategori(new String[]{"F", "M"});
+
+        GraphQLPersonalmappe graphQLPersonalmappe = new ObjectMapper().findAndRegisterModules().readValue(getClass().getClassLoader().getResource("graphqlpersonalmappe.json"), GraphQLPersonalmappe.class);
+        graphQLPersonalmappe.getResult().getPersonalressurs().getArbeidsforhold().forEach(arbeidsforhold -> {
+            arbeidsforhold.getArbeidssted().getLeder().getBrukernavn().setIdentifikatorverdi("brukernavn");
+            arbeidsforhold.getArbeidssted().getOverordnet().getLeder().getBrukernavn().setIdentifikatorverdi("brukernavn");
+        });
+
+        GraphQLQuery graphQLQuery = new GraphQLQuery(ProvisionService.GRAPHQL_QUERY, Collections.singletonMap("brukernavn", "brukernavn"));
+
+        when(fintRepository.post("org-id", GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)).thenReturn(Mono.just(graphQLPersonalmappe));
+
+        Mono<PersonalmappeResource> personalmappeResource = provisionService.getPersonalmappeResource("org-id", "brukernavn", organisation);
+
+        StepVerifier
+                .create(personalmappeResource)
+                .verifyComplete();
+    }
+
+    @Test
     public void getPersonalmappeResource_InvalidGraphQLPersonalmappe_ReturnEmptyMono() {
         OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation();
         organisation.setPersonalressurskategori(new String[]{"F", "M"});
@@ -137,7 +159,7 @@ public class ProvisionServiceTest {
                 .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).build()));
 
         when(fintRepository.getForEntity("org-id", Object.class, URI.create("status-uri")))
-                .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("resource-uri")).build()));
+                .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.CREATED).location(URI.create("resource-uri")).build()));
 
         provisionService.provision("org-id", personalmappeResource);
 
@@ -168,7 +190,7 @@ public class ProvisionServiceTest {
                 .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).build()));
 
         when(fintRepository.getForEntity("org-id", Object.class, URI.create("status-uri")))
-                .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("resource-uri")).build()));
+                .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.CREATED).location(URI.create("resource-uri")).build()));
 
         provisionService.provision("org-id", personalmappeResource);
 
@@ -201,7 +223,7 @@ public class ProvisionServiceTest {
                 .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).build()));
 
         when(fintRepository.getForEntity("org-id", Object.class, URI.create("status-uri")))
-                .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("resource-uri")).build()));
+                .thenReturn(Mono.just(ResponseEntity.status(HttpStatus.CREATED).location(URI.create("resource-uri")).build()));
 
         provisionService.provision("org-id", personalmappeResource);
 

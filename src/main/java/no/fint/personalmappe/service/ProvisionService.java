@@ -27,6 +27,7 @@ import no.fint.personalmappe.utilities.PersonnelUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -138,7 +139,7 @@ public class ProvisionService {
         Flux.fromIterable(usernames)
                 .limitRequest(limit == 0 ? usernames.size() : limit)
                 .delayElements(Duration.ofMillis(1000))
-                .flatMap(username -> getPersonalmappeResource(orgId,  username, organisation))
+                .flatMap(username -> getPersonalmappeResource(orgId, username, organisation))
                 .subscribe(personalmappeResource -> provision(orgId, personalmappeResource));
     }
 
@@ -242,11 +243,11 @@ public class ProvisionService {
     private Mono<MongoDBPersonalmappe> status(String orgId, MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Void> responseEntity) {
         return fintRepository.getForEntity(orgId, Object.class, responseEntity.getHeaders().getLocation())
                 .map(entity -> {
-                    if (entity.getStatusCode().is3xxRedirection()) {
-                        return responseHandlerService.successHandler(mongoDBPersonalmappe, entity);
-                    } else {
+                    if (entity.getStatusCode().equals(HttpStatus.ACCEPTED)) {
                         throw new FinalStatusPendingException();
                     }
+
+                    return responseHandlerService.successHandler(mongoDBPersonalmappe, entity);
                 })
                 .retryWhen(Retry.withThrowable(responseHandlerService.getFinalStatusPending()))
                 .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseHandlerService.errorHandler(ex, mongoDBPersonalmappe)))
