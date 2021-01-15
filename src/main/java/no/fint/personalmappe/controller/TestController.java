@@ -1,4 +1,4 @@
-package no.fint.personalmappe;
+package no.fint.personalmappe.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
