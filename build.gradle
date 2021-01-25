@@ -37,6 +37,10 @@ dependencies {
 	implementation 'com.google.guava:guava:29.0-jre'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.2'
 
+	compile 'org.apache.poi:poi:4.1.2'
+	compile 'org.apache.poi:poi-ooxml:4.1.2'
+
+
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
