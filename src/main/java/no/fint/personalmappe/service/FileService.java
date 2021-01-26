@@ -56,7 +56,7 @@ public class FileService {
         row.createCell(1).setCellValue(mappe.getLeader());
         row.createCell(2).setCellValue(mappe.getWorkplace());
         row.createCell(3).setCellValue(mappe.getOrgId());
-        row.createCell(4).setCellValue(mappe.getAssociation() != null ? mappe.getAssociation().toString() : null);
+        row.createCell(4).setCellValue(mappe.getAssociation() != null ? mappe.getAssociation().toString().split("mappeid/")[1] : null);
         row.createCell(5).setCellValue(mappe.getStatus().name());
         row.createCell(6).setCellValue(mappe.getMessage());
         row.createCell(7).setCellValue(mappe.getVersion());
