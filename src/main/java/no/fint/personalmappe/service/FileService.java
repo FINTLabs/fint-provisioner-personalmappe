@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,7 +77,8 @@ public class FileService {
         return mongoDBRepository
                 .findAll(Sort.by(Sort.Direction.DESC, "lastModifiedDate"))
                 .stream()
-                .filter(pm -> pm.getOrgId().equals(orgId))
+                .filter(pm -> pm.getOrgId().equals(orgId) &&
+                        pm.getLastModifiedDate().isAfter(LocalDateTime.now().minusDays(5)))
                 .collect(Collectors.toList());
     }
 }

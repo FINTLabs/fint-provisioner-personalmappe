@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +44,8 @@ public class ApiController {
         return ResponseEntity.ok(mongoDBRepository
                 .findAll(Sort.by(Sort.Direction.DESC, "lastModifiedDate"))
                 .stream()
-                .filter(pm -> pm.getOrgId().equals(orgId))
+                .filter(pm -> pm.getOrgId().equals(orgId) &&
+                        pm.getLastModifiedDate().isAfter(LocalDateTime.now().minusDays(5)))
                 .collect(Collectors.toList())
         );
     }
