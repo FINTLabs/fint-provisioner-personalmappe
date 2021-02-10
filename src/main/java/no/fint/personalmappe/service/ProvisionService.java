@@ -250,8 +250,7 @@ public class ProvisionService {
                     return responseHandlerService.successHandler(mongoDBPersonalmappe, entity);
                 })
                 .retryWhen(Retry.withThrowable(responseHandlerService.getFinalStatusPending()))
-                .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseHandlerService.errorHandler(ex, mongoDBPersonalmappe)))
-                .onErrorResume(ex -> Mono.just(mongoDBPersonalmappe));
+                .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseHandlerService.errorHandler(ex, mongoDBPersonalmappe)));
     }
 
     private void save(MongoDBPersonalmappe mongoDBPersonalmappe) {
