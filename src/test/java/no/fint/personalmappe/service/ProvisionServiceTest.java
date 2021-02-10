@@ -68,7 +68,7 @@ public class ProvisionServiceTest {
     public void getPersonalmappeResource_ValidGraphQLPersonalmappe_ReturnPersonalmappeResourceMono() throws IOException {
         OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation();
         organisation.setPersonalressurskategori(new String[]{"F", "M"});
-        organisation.setAdministrativeEnheter(new String[]{"123"});
+        organisation.setAdministrativeEnheterExcluded(new String[]{"123"});
 
         GraphQLPersonalmappe graphQLPersonalmappe = new ObjectMapper().findAndRegisterModules().readValue(getClass().getClassLoader().getResource("graphqlpersonalmappe.json"), GraphQLPersonalmappe.class);
 
@@ -118,7 +118,7 @@ public class ProvisionServiceTest {
     public void getPersonalmappeResource_InvalidAdministrativeUnitGraphQLPersonalmappe_ReturnEmptyMono() throws IOException {
         OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation();
         organisation.setPersonalressurskategori(new String[]{"F", "M"});
-        organisation.setAdministrativeEnheter(new String[]{"3"});
+        organisation.setAdministrativeEnheterExcluded(new String[]{"3"});
 
         GraphQLPersonalmappe graphQLPersonalmappe = new ObjectMapper().findAndRegisterModules().readValue(getClass().getClassLoader().getResource("graphqlpersonalmappe.json"), GraphQLPersonalmappe.class);
         graphQLPersonalmappe.getResult().getPersonalressurs().getArbeidsforhold().forEach(arbeidsforhold -> {

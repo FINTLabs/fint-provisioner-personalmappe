@@ -178,8 +178,8 @@ public class ProvisionService {
         return fintRepository.post(orgId, GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
                 .map(GraphQLPersonalmappe::getResult)
                 .map(GraphQLPersonalmappe.Result::getPersonalressurs)
-                .map(personalressurs -> PersonalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation.getPersonalressurskategori(), administrativeEnheter.get(orgId)))
-                .filter(validPersonalmappeResource(organisation.getAdministrativeEnheter()))
+                .map(personalressurs -> PersonalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation, administrativeEnheter.get(orgId)))
+                .filter(validPersonalmappeResource(organisation))
                 .onErrorResume(error -> {
                     log.error("{} - {}", username, error.getMessage());
                     return Mono.empty();
@@ -262,8 +262,7 @@ public class ProvisionService {
         }
     }
 
-
-    private Predicate<PersonalmappeResource> validPersonalmappeResource(String[] administrativeEnheter) {
+    private Predicate<PersonalmappeResource> validPersonalmappeResource(OrganisationProperties.Organisation organisation) {
         return personalmappeResource -> {
             if (Objects.nonNull(personalmappeResource.getNavn()) &&
                     !personalmappeResource.getPersonalressurs().isEmpty() &&
@@ -271,23 +270,26 @@ public class ProvisionService {
                     !personalmappeResource.getArbeidssted().isEmpty() &&
                     !personalmappeResource.getLeder().isEmpty()) {
 
-                if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream()
-                        .findAny()
-                        .orElse(null))) {
+                Optional<Link> identical = personalmappeResource.getPersonalressurs().stream()
+                        .filter(link -> personalmappeResource.getLeder().contains(link))
+                        .findAny();
+
+                if (identical.isPresent()) {
                     log.trace("Identical subject and leader for personalmappe: {}", PersonnelUtilities.getUsername(personalmappeResource));
 
                     return false;
                 }
 
-                if (administrativeEnheter == null) {
+                if (organisation.getAdministrativeEnheterExcluded() == null) {
                     return true;
                 }
 
-                return Arrays.stream(administrativeEnheter)
-                        .noneMatch(id -> personalmappeResource.getArbeidssted().stream()
+                Set<String> excluded = Arrays.stream(organisation.getAdministrativeEnheterExcluded()).collect(Collectors.toSet());
+
+                return personalmappeResource.getArbeidssted().stream()
                                 .map(Link::getHref)
                                 .map(href -> StringUtils.substringAfterLast(href, "/"))
-                                .anyMatch(id::equals));
+                                .noneMatch(excluded::contains);
             }
 
             return false;

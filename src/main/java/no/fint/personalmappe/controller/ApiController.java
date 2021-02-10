@@ -17,10 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -44,8 +44,10 @@ public class ApiController {
         return ResponseEntity.ok(mongoDBRepository
                 .findAll(Sort.by(Sort.Direction.DESC, "lastModifiedDate"))
                 .stream()
-                .filter(pm -> pm.getOrgId().equals(orgId) &&
-                        pm.getLastModifiedDate().isAfter(LocalDateTime.now().minusDays(5)))
+                .filter(pm -> pm.getOrgId().equals(orgId) && pm.getLastModifiedDate().isAfter(LocalDateTime.now()
+                        .minusDays(Optional.ofNullable(organisationProperties.getOrganisations().get(orgId))
+                                .map(OrganisationProperties.Organisation::getHistoryLimit)
+                                .orElse(365))))
                 .collect(Collectors.toList())
         );
     }
@@ -56,7 +58,7 @@ public class ApiController {
     }
 
     @GetMapping("/provisioning/download/{status}")
-    public ResponseEntity<Resource> getFile(@RequestHeader("x-orgid") String orgId, @PathVariable(value = "status") String status, @RequestParam String searchValue) throws IOException {
+    public ResponseEntity<Resource> getFile(@RequestHeader("x-orgid") String orgId, @PathVariable(value = "status") String status, @RequestParam String searchValue) {
         String filename = "personalmapper.xlsx";
         InputStreamResource file = new InputStreamResource(fileService.getFile(orgId, status, searchValue));
 

@@ -1,13 +1,13 @@
 package no.fint.personalmappe.service;
 
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
+import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.MongoDBRepository;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -17,23 +17,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class FileService {
+    private final MongoDBRepository mongoDBRepository;
+    private final OrganisationProperties organisationProperties;
 
-    public static String TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    static String[] HEADERs = {"Username", "Leader", "Workplace", "OrgId", "Association", "Status", "Message", "Version", "CreatedDate", "LastModifiedDate"};
-    static String SHEET = "Personalmapper";
-    @Autowired
-    private MongoDBRepository mongoDBRepository;
+    static final String[] HEADERs = {"Username", "Leader", "Workplace", "OrgId", "Association", "Status", "Message", "Version", "CreatedDate", "LastModifiedDate"};
+    static final String SHEET = "Personalmapper";
 
+    public FileService(MongoDBRepository mongoDBRepository, OrganisationProperties organisationProperties) {
+        this.mongoDBRepository = mongoDBRepository;
+        this.organisationProperties = organisationProperties;
+    }
 
-    public InputStream getFile(String orgId, String status, String searchValue) throws IOException {
-
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream();) {
+    public InputStream getFile(String orgId, String status, String searchValue) {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet(SHEET);
-            List<MongoDBPersonalmappe> mongoDBPersonalmappes = createInitialWorkBook(workbook, sheet, orgId);
+            List<MongoDBPersonalmappe> mongoDBPersonalmappes = createInitialWorkBook(sheet, orgId);
 
             int rowIdx = 1;
             for (MongoDBPersonalmappe mappe : mongoDBPersonalmappes) {
@@ -65,8 +68,7 @@ public class FileService {
         row.createCell(9).setCellValue(mappe.getLastModifiedDate().toString());
     }
 
-    private List<MongoDBPersonalmappe> createInitialWorkBook(Workbook workbook, Sheet sheet, String orgId) {
-
+    private List<MongoDBPersonalmappe> createInitialWorkBook(Sheet sheet, String orgId) {
         // Header
         Row headerRow = sheet.createRow(0);
 
@@ -77,8 +79,10 @@ public class FileService {
         return mongoDBRepository
                 .findAll(Sort.by(Sort.Direction.DESC, "lastModifiedDate"))
                 .stream()
-                .filter(pm -> pm.getOrgId().equals(orgId) &&
-                        pm.getLastModifiedDate().isAfter(LocalDateTime.now().minusDays(5)))
+                .filter(pm -> pm.getOrgId().equals(orgId) && pm.getLastModifiedDate().isAfter(LocalDateTime.now()
+                        .minusDays(Optional.ofNullable(organisationProperties.getOrganisations().get(orgId))
+                                .map(OrganisationProperties.Organisation::getHistoryLimit)
+                                .orElse(365))))
                 .collect(Collectors.toList());
     }
 }
