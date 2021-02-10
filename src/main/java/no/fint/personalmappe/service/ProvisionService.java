@@ -284,10 +284,10 @@ public class ProvisionService {
                 }
 
                 return Arrays.stream(administrativeEnheter)
-                        .anyMatch(id -> personalmappeResource.getArbeidssted().stream()
+                        .noneMatch(id -> personalmappeResource.getArbeidssted().stream()
                                 .map(Link::getHref)
                                 .map(href -> StringUtils.substringAfterLast(href, "/"))
-                                .noneMatch(id::equals));
+                                .anyMatch(id::equals));
             }
 
             return false;
