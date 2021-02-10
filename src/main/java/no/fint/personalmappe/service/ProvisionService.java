@@ -179,7 +179,7 @@ public class ProvisionService {
                 .map(GraphQLPersonalmappe::getResult)
                 .map(GraphQLPersonalmappe.Result::getPersonalressurs)
                 .map(personalressurs -> PersonalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation.getPersonalressurskategori(), administrativeEnheter.get(orgId)))
-                .filter(validPersonalmappeResource)
+                .filter(validPersonalmappeResource(organisation.getAdministrativeEnheter()))
                 .onErrorResume(error -> {
                     log.error("{} - {}", username, error.getMessage());
                     return Mono.empty();
@@ -263,16 +263,34 @@ public class ProvisionService {
     }
 
 
-    private final Predicate<PersonalmappeResource> validPersonalmappeResource = personalmappeResource -> {
-        if (Objects.nonNull(personalmappeResource.getNavn()) && !personalmappeResource.getPersonalressurs().isEmpty() && !personalmappeResource.getPerson().isEmpty() && !personalmappeResource.getArbeidssted().isEmpty() && !personalmappeResource.getLeder().isEmpty()) {
-            if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream().findAny().orElse(null))) {
-                log.trace("Identical subject and leader for personalmappe: {}", PersonnelUtilities.getUsername(personalmappeResource));
+    private Predicate<PersonalmappeResource> validPersonalmappeResource(String[] administrativeEnheter) {
+        return personalmappeResource -> {
+            if (Objects.nonNull(personalmappeResource.getNavn()) &&
+                    !personalmappeResource.getPersonalressurs().isEmpty() &&
+                    !personalmappeResource.getPerson().isEmpty() &&
+                    !personalmappeResource.getArbeidssted().isEmpty() &&
+                    !personalmappeResource.getLeder().isEmpty()) {
 
-                return false;
+                if (personalmappeResource.getPersonalressurs().contains(personalmappeResource.getLeder().stream()
+                        .findAny()
+                        .orElse(null))) {
+                    log.trace("Identical subject and leader for personalmappe: {}", PersonnelUtilities.getUsername(personalmappeResource));
+
+                    return false;
+                }
+
+                if (administrativeEnheter == null) {
+                    return true;
+                }
+
+                return Arrays.stream(administrativeEnheter)
+                        .anyMatch(id -> personalmappeResource.getArbeidssted().stream()
+                                .map(Link::getHref)
+                                .map(href -> StringUtils.substringAfterLast(href, "/"))
+                                .noneMatch(id::equals));
             }
-            return true;
-        }
 
-        return false;
-    };
+            return false;
+        };
+    }
 }
