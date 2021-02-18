@@ -82,6 +82,7 @@ public class FileService {
                 .filter(pm -> pm.getOrgId().equals(orgId) && pm.getLastModifiedDate().isAfter(LocalDateTime.now()
                         .minusDays(Optional.ofNullable(organisationProperties.getOrganisations().get(orgId))
                                 .map(OrganisationProperties.Organisation::getHistoryLimit)
+                                .filter(limit -> limit > 0)
                                 .orElse(365))))
                 .collect(Collectors.toList());
     }
