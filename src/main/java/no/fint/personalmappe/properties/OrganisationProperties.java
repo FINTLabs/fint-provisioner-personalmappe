@@ -10,7 +10,6 @@ import java.util.Map;
 @Data
 @ConfigurationProperties("fint")
 public class OrganisationProperties {
-
     private Map<String, Organisation> organisations = new HashMap<>();
 
     @Data
@@ -19,10 +18,12 @@ public class OrganisationProperties {
         private String password;
         private String registration;
         private int bulkLimit;
+        private int historyLimit;
         private boolean bulk;
         private boolean delta;
         private boolean arkivressurs;
         private String[] personalressurskategori;
+        private String[] administrativeEnheterExcluded;
         private List<String> transformationScripts;
     }
 }

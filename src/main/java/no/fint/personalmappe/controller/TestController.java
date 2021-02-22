@@ -1,4 +1,4 @@
-package no.fint.personalmappe;
+package no.fint.personalmappe.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -10,7 +10,6 @@ import java.net.URI;
 @Slf4j
 @RestController
 public class TestController {
-
     @PostMapping("/post")
     public ResponseEntity<?> dummyPost() {
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(URI.create("http://localhost:8080/status")).build();

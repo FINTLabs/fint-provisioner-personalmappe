@@ -18,6 +18,8 @@ public class MongoDBPersonalmappe {
     @Id
     private String id;
     private String username;
+    private String leader;
+    private String workplace;
     private String orgId;
     private URI association;
     private HttpStatus status;

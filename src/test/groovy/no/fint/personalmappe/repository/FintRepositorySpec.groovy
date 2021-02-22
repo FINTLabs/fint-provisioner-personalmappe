@@ -10,6 +10,7 @@ import no.fint.personalmappe.properties.OrganisationProperties
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.springframework.security.core.Authentication
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager
 import org.springframework.web.reactive.function.client.WebClient
@@ -21,7 +22,7 @@ class FintRepositorySpec extends Specification {
     WebClient webClient
 
     ReactiveOAuth2AuthorizedClientManager authorizedClientManager = Stub(ReactiveOAuth2AuthorizedClientManager) {
-        authorize(_) >> Mono.just(Mock(OAuth2AuthorizedClient))
+        authorize(_ as OAuth2AuthorizeRequest) >> Mono.just(Mock(OAuth2AuthorizedClient))
     }
 
     OrganisationProperties organisationProperties = Stub(OrganisationProperties) {

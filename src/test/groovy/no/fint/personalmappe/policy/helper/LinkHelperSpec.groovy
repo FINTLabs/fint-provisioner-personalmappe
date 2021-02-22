@@ -9,7 +9,7 @@ import static no.fint.personalmappe.policy.helper.LinkHelper.resource
 
 class LinkHelperSpec extends Specification {
 
-    PersonalmappeResource personalmappeResource;
+    PersonalmappeResource personalmappeResource
 
     void setup() {
         personalmappeResource = TestFactory.createPersonalmappeResource()
@@ -35,7 +35,7 @@ class LinkHelperSpec extends Specification {
     def "Get identifikator value from link"() {
         when:
         def systemid = resource().apply(personalmappeResource).link("saksstatus").getValue()
-        def kode = resource().apply(personalmappeResource).link("saksstatus").id("kode").getValue();
+        def kode = resource().apply(personalmappeResource).link("saksstatus").id("kode").getValue()
 
         then:
         systemid
