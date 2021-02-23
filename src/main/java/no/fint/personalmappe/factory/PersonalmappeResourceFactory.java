@@ -17,14 +17,14 @@ import java.util.function.Predicate;
 
 public class PersonalmappeResourceFactory {
 
-    public static PersonalmappeResource toPersonalmappeResource(GraphQLPersonalmappe.Personalressurs personalressurs, OrganisationProperties.Organisation organisation, Collection<String> administrativEnheter) {
+    public static PersonalmappeResource toPersonalmappeResource(GraphQLPersonalmappe.Personalressurs personalressurs, OrganisationProperties organisationProperties, List<String> administrativEnheter) {
         PersonalmappeResource personalmappeResource = new PersonalmappeResource();
 
         Optional<GraphQLPersonalmappe.Arbeidsforhold> arbeidsforhold = Optional.ofNullable(personalressurs)
                 .map(GraphQLPersonalmappe.Personalressurs::getArbeidsforhold)
                 .orElseGet(Collections::emptyList)
                 .stream()
-                .filter(forhold -> validArbeidsforhold().test(forhold, organisation.getPersonalressurskategori()))
+                .filter(forhold -> validArbeidsforhold().test(forhold, organisationProperties.getPersonnelResourceCategory()))
                 .min(Comparator.comparing(forhold -> Optional.ofNullable(forhold.getGyldighetsperiode())
                         .map(GraphQLPersonalmappe.Periode::getStart)
                         .orElse(LocalDateTime.MAX)));

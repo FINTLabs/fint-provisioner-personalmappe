@@ -18,30 +18,19 @@ public class SchedulingService {
 
     @Scheduled(cron = "${fint.cron.bulk}")
     public void bulk() {
-        organisationProperties.getOrganisations().keySet()
-                .forEach(orgId -> {
-                    provisionService.getAdministrativeEnheter().get(orgId).clear();
-                    OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
-                    if (props.isBulk()) {
-                        log.trace("Bulk personalmapper for {}", orgId);
-                        provisionService.bulkProvisionByOrgId(orgId, props.getBulkLimit());
-                    } else {
-                        log.trace("Bulk is disabled for {}", orgId);
-                    }
-                });
+        if (organisationProperties.isBulk()) {
+            provisionService.bulk(organisationProperties.getBulkLimit());
+        } else {
+            log.info("Bulk is disabled");
+        }
     }
 
     @Scheduled(cron = "${fint.cron.delta}")
     public void delta() {
-        organisationProperties.getOrganisations().keySet()
-                .forEach(orgId -> {
-                    OrganisationProperties.Organisation props = organisationProperties.getOrganisations().get(orgId);
-                    if (props.isDelta()) {
-                        log.trace("Delta personalmapper for {}", orgId);
-                        provisionService.deltaProvisionByOrgId(orgId);
-                    } else {
-                        log.trace("Delta is disabled for {}", orgId);
-                    }
-                });
+        if (organisationProperties.isDelta()) {
+            provisionService.delta();
+        } else {
+            log.info("Delta is disabled");
+        }
     }
 }
