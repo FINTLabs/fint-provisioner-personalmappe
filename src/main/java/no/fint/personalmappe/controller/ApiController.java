@@ -5,6 +5,7 @@ import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.MongoDBRepository;
+import no.fint.personalmappe.service.BulkService;
 import no.fint.personalmappe.service.FileService;
 import no.fint.personalmappe.service.ProvisionService;
 import org.springframework.core.io.InputStreamResource;
@@ -27,12 +28,14 @@ import java.util.stream.Collectors;
 public class ApiController {
     private final MongoDBRepository mongoDBRepository;
     private final OrganisationProperties organisationProperties;
+    private final BulkService bulkService;
     private final ProvisionService provisionService;
     private final FileService fileService;
 
-    public ApiController(MongoDBRepository mongoDBRepository, OrganisationProperties organisationProperties, ProvisionService provisionService, FileService fileService) {
+    public ApiController(MongoDBRepository mongoDBRepository, OrganisationProperties organisationProperties, BulkService bulkService, ProvisionService provisionService, FileService fileService) {
         this.mongoDBRepository = mongoDBRepository;
         this.organisationProperties = organisationProperties;
+        this.bulkService = bulkService;
         this.provisionService = provisionService;
         this.fileService = fileService;
     }
@@ -63,16 +66,16 @@ public class ApiController {
 
     @GetMapping("/provisioning/username/{username}")
     public Mono<PersonalmappeResource> getPersonalmappeResourceAbleToBeProvisioned(@PathVariable String username) {
-        return provisionService.getPersonalmappeResource(username);
+        return provisionService.getOne(username);
     }
 
     @PostMapping("/provisioning/username/{username}")
     public void provisionPersonalmappeByUsername(@PathVariable String username) {
-        provisionService.single(username);
+        provisionService.provisionOne(username);
     }
 
     @PostMapping("/provisioning/limit/{limit}")
     public void provisionLimitedNumberOfPersonalmapper(@PathVariable int limit) {
-        provisionService.bulk(limit);
+        bulkService.bulk(limit);
     }
 }

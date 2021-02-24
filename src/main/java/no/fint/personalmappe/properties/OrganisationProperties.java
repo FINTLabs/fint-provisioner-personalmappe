@@ -12,7 +12,7 @@ public class OrganisationProperties {
     private String registration;
     private String username;
     private String password;
-    private int bulkLimit;
+    private long bulkLimit;
     private int historyLimit;
     private boolean bulk;
     private boolean delta;

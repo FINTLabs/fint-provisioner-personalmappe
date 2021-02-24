@@ -1,6 +1,7 @@
 package no.fint.personalmappe.service;
 
 import com.mongodb.MongoBulkWriteException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.FintLinks;
@@ -10,7 +11,6 @@ import no.fint.model.resource.administrasjon.arkiv.AdministrativEnhetResources;
 import no.fint.model.resource.administrasjon.arkiv.ArkivressursResources;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
-import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
 import no.fint.personalmappe.exception.FinalStatusPendingException;
 import no.fint.personalmappe.factory.PersonalmappeResourceFactory;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
@@ -45,9 +45,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ProvisionService {
-    @Value("${fint.endpoints.personnel-resource}")
-    private URI personnelResourceEndpoint;
-
     @Value("${fint.endpoints.personnel-folder}")
     private URI personnelFolderEndpoint;
 
@@ -62,86 +59,58 @@ public class ProvisionService {
 
     public static final String GRAPHQL_QUERY = GraphQLUtilities.getGraphQLQuery("personalressurs.graphql");
 
+    @Getter
     private List<String> administrativeUnitSystemIds = new ArrayList<>();
 
     private final FintRepository fintRepository;
     private final ResponseHandlerService responseHandlerService;
     private final MongoDBRepository mongoDBRepository;
+    private final PersonalmappeResourceFactory personalmappeResourceFactory;
     private final OrganisationProperties organisationProperties;
     private final PolicyService policyService;
 
-    public ProvisionService(FintRepository fintRepository, ResponseHandlerService responseHandlerService, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, PolicyService policyService) {
+    public ProvisionService(FintRepository fintRepository, ResponseHandlerService responseHandlerService, PersonalmappeResourceFactory personalmappeResourceFactory, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, PolicyService policyService) {
         this.fintRepository = fintRepository;
         this.responseHandlerService = responseHandlerService;
+        this.personalmappeResourceFactory = personalmappeResourceFactory;
         this.organisationProperties = organisationProperties;
         this.mongoDBRepository = mongoDBRepository;
         this.policyService = policyService;
     }
 
-    public void bulk(int bulkLimit) {
-        updateAdministrativeUnitSystemIds();
-
-        List<PersonalressursResource> personnelResources = fintRepository.get(PersonalressursResources.class, personnelResourceEndpoint)
-                .flatMapIterable(PersonalressursResources::getContent)
-                .collectList()
-                .blockOptional()
-                .orElseThrow(IllegalArgumentException::new);
-
-        if (organisationProperties.isArchiveResource()) {
-            log.info("Updating Archive resources...");
-
-            updateArchiveResource(personnelResources);
+    public void provisionOne(String username) {
+        if (administrativeUnitSystemIds.isEmpty()) {
+            updateAdministrativeUnitSystemIds();
         }
 
-        List<String> usernames = getUsernames(personnelResources);
+        run(Collections.singletonList(username), 1).subscribe(log::trace);
+    }
 
-        int limit = (bulkLimit == 0 ? usernames.size() : bulkLimit);
+    public Mono<PersonalmappeResource> getOne(String username) {
+        if (administrativeUnitSystemIds.isEmpty()) {
+            updateAdministrativeUnitSystemIds();
+        }
 
-        log.info("Bulk provision {} of {} users", limit, usernames.size());
+        return getPersonnelFolder(username);
+    }
 
-        Flux.fromIterable(usernames)
+    public Flux<String> run(List<String> usernames, long limit) {
+        return Flux.fromIterable(usernames)
                 .limitRequest(limit)
                 .delayElements(Duration.ofMillis(1000))
-                .flatMap(this::getPersonalmappeResource)
-                .subscribe(this::provision);
+                .flatMap(username -> getPersonnelFolder(username)
+                        .flatMap(this::updatePersonnelFolder))
+                .doOnNext(this::save)
+                .map(MongoDBPersonalmappe::getUsername);
     }
 
-    public void delta() {
-        if (administrativeUnitSystemIds.isEmpty()) {
-            updateAdministrativeUnitSystemIds();
-        }
-
-        List<PersonalressursResource> personnelResources = fintRepository.getUpdates(PersonalressursResources.class, personnelResourceEndpoint)
-                .flatMapIterable(PersonalressursResources::getContent)
-                .collectList()
-                .blockOptional()
-                .orElseThrow(IllegalArgumentException::new);
-
-        List<String> usernames = getUsernames(personnelResources);
-
-        log.info("Delta provision {} users", usernames.size());
-
-        Flux.fromIterable(usernames)
-                .delayElements(Duration.ofMillis(1000))
-                .flatMap(this::getPersonalmappeResource)
-                .subscribe(this::provision);
-    }
-
-    public void single(String username) {
-        if (administrativeUnitSystemIds.isEmpty()) {
-            updateAdministrativeUnitSystemIds();
-        }
-
-        getPersonalmappeResource(username).subscribe(this::provision);
-    }
-
-    public Mono<PersonalmappeResource> getPersonalmappeResource(String username) {
+    public Mono<PersonalmappeResource> getPersonnelFolder(String username) {
         GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPHQL_QUERY, Collections.singletonMap("brukernavn", username));
 
         return fintRepository.post(GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
                 .map(graphQLPersonnelFolder -> Optional.ofNullable(graphQLPersonnelFolder.getResult())
                         .map(GraphQLPersonalmappe.Result::getPersonalressurs)
-                        .map(personnelResource -> PersonalmappeResourceFactory.toPersonalmappeResource(personnelResource, organisationProperties, administrativeUnitSystemIds))
+                        .map(personnelResource -> personalmappeResourceFactory.toPersonalmappeResource(personnelResource, organisationProperties, administrativeUnitSystemIds))
                         .orElseGet(PersonalmappeResource::new))
                 .filter(validPersonnelFolder())
                 .onErrorResume(error -> {
@@ -150,63 +119,60 @@ public class ProvisionService {
                 });
     }
 
-    public void provision(PersonalmappeResource personalmappeResource) {
-        String id = organisationProperties.getOrgId() + "_" + PersonnelUtilities.getNIN(personalmappeResource);
+    private Mono<MongoDBPersonalmappe> updatePersonnelFolder(PersonalmappeResource personnelFolder) {
+        String id = organisationProperties.getOrgId() + "_" + PersonnelUtilities.getNIN(personnelFolder);
 
-        Optional<MongoDBPersonalmappe> mongoDBPersonalmappe = mongoDBRepository.findById(id);
+        Optional<MongoDBPersonalmappe> mongoDBPersonnelFolder = mongoDBRepository.findById(id);
 
-        mongoDBPersonalmappe
-                .map(dbPersonalmappe -> update(personalmappeResource, dbPersonalmappe))
-                .orElseGet(() -> create(id, personalmappeResource))
-                .onErrorResume(throwable -> Mono.empty())
-                .doOnNext(this::save)
-                .map(MongoDBPersonalmappe::getUsername)
-                .subscribe(log::trace);
+        return mongoDBPersonnelFolder
+                .map(dbPersonnelFolder -> update(personnelFolder, dbPersonnelFolder))
+                .orElseGet(() -> create(id, personnelFolder))
+                .onErrorResume(throwable -> Mono.empty());
     }
 
-    private Mono<MongoDBPersonalmappe> create(String id, PersonalmappeResource personalmappeResource) {
-        doTransformation(personalmappeResource);
+    private Mono<MongoDBPersonalmappe> create(String id, PersonalmappeResource personnelFolder) {
+        doTransformation(personnelFolder);
 
-        return fintRepository.postForEntity(personalmappeResource, personnelFolderEndpoint)
+        return fintRepository.postForEntity(personnelFolder, personnelFolderEndpoint)
                 .flatMap(responseEntity -> {
-                    MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.pendingHandler(organisationProperties.getOrgId(), id, personalmappeResource);
+                    MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.pendingHandler(organisationProperties.getOrgId(), id, personnelFolder);
 
                     return status(mongoDBPersonalmappe, responseEntity);
                 })
-                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", PersonnelUtilities.getUsername(personalmappeResource), clientResponse.getMessage()));
+                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", PersonnelUtilities.getUsername(personnelFolder), clientResponse.getMessage()));
     }
 
-    private Mono<MongoDBPersonalmappe> update(PersonalmappeResource personalmappeResource, MongoDBPersonalmappe mongoDBPersonalmappe) {
-        doTransformation(personalmappeResource);
+    private Mono<MongoDBPersonalmappe> update(PersonalmappeResource personnelFolder, MongoDBPersonalmappe mongoDBPersonnelFolder) {
+        doTransformation(personnelFolder);
 
         Mono<ResponseEntity<Void>> responseEntity;
 
-        if (mongoDBPersonalmappe.getAssociation() == null) {
-            responseEntity = fintRepository.postForEntity(personalmappeResource, personnelFolderEndpoint);
+        if (mongoDBPersonnelFolder.getAssociation() == null) {
+            responseEntity = fintRepository.postForEntity(personnelFolder, personnelFolderEndpoint);
         } else {
-            responseEntity = fintRepository.putForEntity(personalmappeResource, mongoDBPersonalmappe.getAssociation());
+            responseEntity = fintRepository.putForEntity(personnelFolder, mongoDBPersonnelFolder.getAssociation());
         }
 
         return responseEntity
                 .flatMap(entity -> {
-                    MongoDBPersonalmappe dbPersonalmappe = responseHandlerService.pendingHandler(mongoDBPersonalmappe, personalmappeResource);
+                    MongoDBPersonalmappe dbPersonalmappe = responseHandlerService.pendingHandler(mongoDBPersonnelFolder, personnelFolder);
 
                     return status(dbPersonalmappe, entity);
                 })
-                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", PersonnelUtilities.getUsername(personalmappeResource), clientResponse.getMessage()));
+                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", PersonnelUtilities.getUsername(personnelFolder), clientResponse.getMessage()));
     }
 
-    private Mono<MongoDBPersonalmappe> status(MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Void> responseEntity) {
+    private Mono<MongoDBPersonalmappe> status(MongoDBPersonalmappe mongoDBPersonnelFolder, ResponseEntity<Void> responseEntity) {
         return fintRepository.getForEntity(Object.class, responseEntity.getHeaders().getLocation())
                 .map(entity -> {
                     if (entity.getStatusCode().equals(HttpStatus.ACCEPTED)) {
                         throw new FinalStatusPendingException();
                     }
 
-                    return responseHandlerService.successHandler(mongoDBPersonalmappe, entity);
+                    return responseHandlerService.successHandler(mongoDBPersonnelFolder, entity);
                 })
                 .retryWhen(Retry.withThrowable(responseHandlerService.getFinalStatusPending()))
-                .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseHandlerService.errorHandler(ex, mongoDBPersonalmappe)));
+                .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseHandlerService.errorHandler(ex, mongoDBPersonnelFolder)));
     }
 
     public Predicate<PersonalmappeResource> validPersonnelFolder() {
@@ -239,11 +205,11 @@ public class ProvisionService {
         };
     }
 
-    private void save(MongoDBPersonalmappe mongoDBPersonalmappe) {
+    private void save(MongoDBPersonalmappe mongoDBPersonnelFolder) {
         try {
-            mongoDBRepository.save(mongoDBPersonalmappe);
+            mongoDBRepository.save(mongoDBPersonnelFolder);
         } catch (OptimisticLockingFailureException | MongoBulkWriteException e) {
-            log.error("{} -> {}", e.getMessage(), mongoDBPersonalmappe);
+            log.error("{} -> {}", e.getMessage(), mongoDBPersonnelFolder);
         }
     }
 
@@ -254,7 +220,7 @@ public class ProvisionService {
         }
     }
 
-    private void updateArchiveResource(List<PersonalressursResource> personalressursList) {
+    public void updateArchiveResource(List<PersonalressursResource> personalressursList) {
         final Set<String> selfLinks = personalressursList.stream().map(FintLinks::getSelfLinks).flatMap(List::stream).map(Link::getHref).collect(Collectors.toSet());
         fintRepository.get(ArkivressursResources.class, archiveResourceEndpoint)
                 .flatMapMany(r -> Flux.fromStream(r.getContent().stream()))
@@ -283,7 +249,7 @@ public class ProvisionService {
         return (element, sink) -> Optional.ofNullable(mapper.apply(element)).ifPresent(sink::next);
     }
 
-    private void updateAdministrativeUnitSystemIds() {
+    public void updateAdministrativeUnitSystemIds() {
         administrativeUnitSystemIds = fintRepository.get(AdministrativEnhetResources.class, administrativeUnitEndpoint)
                 .flatMapIterable(AdministrativEnhetResources::getContent)
                 .map(AdministrativEnhetResource::getSystemId)
@@ -293,7 +259,7 @@ public class ProvisionService {
                 .orElseThrow(IllegalArgumentException::new);
     }
 
-    private List<String> getUsernames(List<PersonalressursResource> personnelResources) {
+    public List<String> getUsernames(List<PersonalressursResource> personnelResources) {
         return personnelResources
                 .stream()
                 .map(PersonalressursResource::getBrukernavn)

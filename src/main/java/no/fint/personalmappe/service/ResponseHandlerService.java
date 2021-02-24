@@ -30,7 +30,7 @@ public class ResponseHandlerService {
     @Value("${fint.status-pending.max-backoff:5}")
     private long maxBackoff;
 
-    @Value("${fint.status-pending.timeout:30}")
+    @Value("${fint.status-pending.timeout:15}")
     private long timeout;
 
     @Getter

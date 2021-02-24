@@ -7,6 +7,7 @@ import no.fint.model.felles.kompleksedatatyper.Personnavn
 import no.fint.model.resource.Link
 import no.fint.model.resource.administrasjon.arkiv.PartsinformasjonResource
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
+import no.fint.personalmappe.factory.PersonalmappeResourceFactory
 import no.fint.personalmappe.properties.OrganisationProperties
 import no.fint.personalmappe.repository.FintRepository
 import no.fint.personalmappe.repository.MongoDBRepository
@@ -19,6 +20,8 @@ class ProvisionServiceSpec extends Specification {
     FintRepository fintRepository = Mock()
     ResponseHandlerService responseHandlerService = Mock()
     OrganisationProperties organisationProperties = Mock()
+    PersonalmappeResourceFactory personalmappeResourceFactory = Mock()
+    PolicyService policyService = Mock()
 
     @Autowired
     MongoDBRepository mongoDBRepository
@@ -26,7 +29,7 @@ class ProvisionServiceSpec extends Specification {
     ProvisionService provisionService
 
     void setup() {
-        provisionService = new ProvisionService(fintRepository, responseHandlerService, organisationProperties, mongoDBRepository, Mock(PolicyService))
+        provisionService = new ProvisionService(fintRepository, responseHandlerService, personalmappeResourceFactory, organisationProperties, mongoDBRepository, policyService)
     }
 
     void cleanup() {
