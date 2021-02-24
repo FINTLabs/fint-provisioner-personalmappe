@@ -29,17 +29,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
-	implementation 'io.projectreactor.addons:reactor-extra'
-
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'com.google.guava:guava:29.0-jre'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.2'
 
-	compile 'org.apache.poi:poi:4.1.2'
-	compile 'org.apache.poi:poi-ooxml:4.1.2'
-
+	implementation 'org.apache.poi:poi:4.1.2'
+	implementation 'org.apache.poi:poi-ooxml:4.1.2'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -55,7 +50,6 @@ dependencies {
 	testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.2.0'
 
 	implementation 'no.fint:fint-administrasjon-resource-model-java:3.4.0'
-	implementation 'no.fint:fint-utdanning-resource-model-java:3.4.0'
 	implementation 'no.fint:fint-felles-resource-model-java:3.4.0'
 	implementation 'no.fint:fint-arkiv-model-java:3.5.0-alpha-2'
 	implementation 'no.fint:fint-model-resource:0.3.3'

@@ -8,11 +8,18 @@ import no.fint.model.resource.Link
 import no.fint.model.resource.administrasjon.arkiv.PartsinformasjonResource
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
 import no.fint.personalmappe.factory.PersonalmappeResourceFactory
+import no.fint.personalmappe.model.GraphQLPersonalmappe
+import no.fint.personalmappe.model.MongoDBPersonalmappe
 import no.fint.personalmappe.properties.OrganisationProperties
 import no.fint.personalmappe.repository.FintRepository
 import no.fint.personalmappe.repository.MongoDBRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Mono
+import reactor.test.StepVerifier
 import spock.lang.Specification
 
 @DataMongoTest
@@ -34,6 +41,51 @@ class ProvisionServiceSpec extends Specification {
 
     void cleanup() {
         mongoDBRepository.deleteAll()
+    }
+
+    def "run returns flux and stores document"() {
+        given:
+        1 * fintRepository.post(_, _, _) >> Mono.just(newGraphQLPersonnelFolder())
+        1 * personalmappeResourceFactory.toPersonalmappeResource(_, _, _) >> newPersonnelFolder('username')
+        1 * organisationProperties.getAdministrativeUnitsExcluded() >> []
+
+        1 * organisationProperties.getOrgId() >> 'org-id'
+
+        1 * fintRepository.postForEntity(_, _) >> Mono.just(ResponseEntity.accepted().location(URI.create('/status')).build())
+        1 * responseHandlerService.pendingHandler(_, _, _) >> newMongoDbPersonnelFolder(HttpStatus.ACCEPTED)
+
+        1 * fintRepository.getForEntity(_, _) >> Mono.just(ResponseEntity.created(URI.create('/resource')).build())
+        1 * responseHandlerService.successHandler(_, _) >> newMongoDbPersonnelFolder(HttpStatus.CREATED)
+
+        when:
+        def flux = provisionService.run(['username'], 1)
+
+        then:
+        StepVerifier.create(flux)
+                .expectNextCount(1)
+                .verifyComplete()
+
+        mongoDBRepository.count() == 1
+    }
+
+    def "run returns empty flux on error"() {
+        given:
+        1 * fintRepository.post(_, _, _) >> Mono.just(newGraphQLPersonnelFolder())
+        1 * personalmappeResourceFactory.toPersonalmappeResource(_, _, _) >> newPersonnelFolder('username')
+        1 * organisationProperties.getAdministrativeUnitsExcluded() >> []
+
+        1 * organisationProperties.getOrgId() >> 'org-id'
+
+        1 * fintRepository.postForEntity(_, _) >> Mono.error(new WebClientResponseException(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.name(), null, null, null))
+
+        when:
+        def flux = provisionService.run(['username'], 1)
+
+        then:
+        StepVerifier.create(flux)
+                .verifyComplete()
+
+        mongoDBRepository.count() == 0
     }
 
     def "validPersonnelFolder returns true if all mandatory fields are present"() {
@@ -79,5 +131,19 @@ class ProvisionServiceSpec extends Specification {
         resource.addLeder(Link.with(Personalressurs.class, "brukernavn", username))
 
         return resource
+    }
+
+    def newMongoDbPersonnelFolder(HttpStatus httpStatus) {
+        return MongoDBPersonalmappe.builder()
+                .id('id')
+                .username('username')
+                .status(httpStatus)
+                .build()
+    }
+
+    def newGraphQLPersonnelFolder() {
+        return new GraphQLPersonalmappe(result: new GraphQLPersonalmappe.Result(
+                personalressurs: new GraphQLPersonalmappe.Personalressurs())
+        )
     }
 }

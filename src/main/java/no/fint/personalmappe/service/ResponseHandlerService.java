@@ -2,47 +2,22 @@ package no.fint.personalmappe.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResources;
-import no.fint.personalmappe.exception.FinalStatusPendingException;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
 import no.fint.personalmappe.utilities.PersonnelUtilities;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.retry.Retry;
 
-import javax.annotation.PostConstruct;
 import java.net.URI;
-import java.time.Duration;
 
 @Slf4j
 @Service
 public class ResponseHandlerService {
-    @Value("${fint.status-pending.backoff:1}")
-    private long backoff;
-
-    @Value("${fint.status-pending.max-backoff:5}")
-    private long maxBackoff;
-
-    @Value("${fint.status-pending.timeout:15}")
-    private long timeout;
-
-    @Getter
-    private Retry<?> finalStatusPending;
-
-    @PostConstruct
-    public void init() {
-        finalStatusPending = Retry.anyOf(FinalStatusPendingException.class)
-                .exponentialBackoff(Duration.ofSeconds(backoff), Duration.ofMinutes(maxBackoff))
-                .timeout(Duration.ofMinutes(timeout))
-                .doOnRetry(exception -> log.info("{}", exception));
-    }
 
     public MongoDBPersonalmappe pendingHandler(String orgId, String id, PersonalmappeResource personalmappeResource) {
         return MongoDBPersonalmappe.builder()

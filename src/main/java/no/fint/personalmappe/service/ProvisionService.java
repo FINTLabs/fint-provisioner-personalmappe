@@ -120,22 +120,24 @@ public class ProvisionService {
     }
 
     private Mono<MongoDBPersonalmappe> updatePersonnelFolder(PersonalmappeResource personnelFolder) {
-        String id = organisationProperties.getOrgId() + "_" + PersonnelUtilities.getNIN(personnelFolder);
+        String orgId = organisationProperties.getOrgId();
+
+        String id = orgId + "_" + PersonnelUtilities.getNIN(personnelFolder);
 
         Optional<MongoDBPersonalmappe> mongoDBPersonnelFolder = mongoDBRepository.findById(id);
 
         return mongoDBPersonnelFolder
                 .map(dbPersonnelFolder -> update(personnelFolder, dbPersonnelFolder))
-                .orElseGet(() -> create(id, personnelFolder))
+                .orElseGet(() -> create(orgId, id, personnelFolder))
                 .onErrorResume(throwable -> Mono.empty());
     }
 
-    private Mono<MongoDBPersonalmappe> create(String id, PersonalmappeResource personnelFolder) {
+    private Mono<MongoDBPersonalmappe> create(String orgId, String id, PersonalmappeResource personnelFolder) {
         doTransformation(personnelFolder);
 
         return fintRepository.postForEntity(personnelFolder, personnelFolderEndpoint)
                 .flatMap(responseEntity -> {
-                    MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.pendingHandler(organisationProperties.getOrgId(), id, personnelFolder);
+                    MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.pendingHandler(orgId, id, personnelFolder);
 
                     return status(mongoDBPersonalmappe, responseEntity);
                 })
@@ -171,7 +173,9 @@ public class ProvisionService {
 
                     return responseHandlerService.successHandler(mongoDBPersonnelFolder, entity);
                 })
-                .retryWhen(Retry.withThrowable(responseHandlerService.getFinalStatusPending()))
+                .retryWhen(Retry.backoff(10, Duration.ofSeconds(1))
+                        .filter(FinalStatusPendingException.class::isInstance)
+                        .doAfterRetry(exception -> log.info("{}", exception)))
                 .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseHandlerService.errorHandler(ex, mongoDBPersonnelFolder)));
     }
 
