@@ -43,10 +43,10 @@ class ProvisionServiceSpec extends Specification {
         mongoDBRepository.deleteAll()
     }
 
-    def "run returns flux and stores document"() {
+    def "run returns flux and stores document when all mandatory fields and relations are present"() {
         given:
         1 * fintRepository.post(_, _, _) >> Mono.just(newGraphQLPersonnelFolder())
-        1 * personalmappeResourceFactory.toPersonalmappeResource(_, _, _) >> newPersonnelFolder('username')
+        1 * personalmappeResourceFactory.toPersonalmappeResource(_, _, _) >> newPersonnelFolder('username', 'username-leader', 'workplace')
         1 * organisationProperties.getAdministrativeUnitsExcluded() >> []
 
         1 * organisationProperties.getOrgId() >> 'org-id'
@@ -68,10 +68,41 @@ class ProvisionServiceSpec extends Specification {
         mongoDBRepository.count() == 1
     }
 
+    def "run return empty flux if subject and leader are identical"() {
+        given:
+        1 * fintRepository.post(_, _, _) >> Mono.just(newGraphQLPersonnelFolder())
+        1 * personalmappeResourceFactory.toPersonalmappeResource(_, _, _) >> newPersonnelFolder('username', 'username', 'workplace')
+
+        when:
+        def flux = provisionService.run(['username'], 1)
+
+        then:
+        StepVerifier.create(flux)
+                .verifyComplete()
+
+        mongoDBRepository.count() == 0
+    }
+
+    def "run returns empty flux if workplace is included in list of excluded administrative units"() {
+        given:
+        1 * fintRepository.post(_, _, _) >> Mono.just(newGraphQLPersonnelFolder())
+        1 * personalmappeResourceFactory.toPersonalmappeResource(_, _, _) >> newPersonnelFolder('username', 'username-leader', 'workplace')
+        1 * organisationProperties.getAdministrativeUnitsExcluded() >> ['workplace']
+
+        when:
+        def flux = provisionService.run(['username'], 1)
+
+        then:
+        StepVerifier.create(flux)
+                .verifyComplete()
+
+        mongoDBRepository.count() == 0
+    }
+
     def "run returns empty flux on error"() {
         given:
         1 * fintRepository.post(_, _, _) >> Mono.just(newGraphQLPersonnelFolder())
-        1 * personalmappeResourceFactory.toPersonalmappeResource(_, _, _) >> newPersonnelFolder('username')
+        1 * personalmappeResourceFactory.toPersonalmappeResource(_, _, _) >> newPersonnelFolder('username', 'username-leader', 'workplace')
         1 * organisationProperties.getAdministrativeUnitsExcluded() >> []
 
         1 * organisationProperties.getOrgId() >> 'org-id'
@@ -88,33 +119,7 @@ class ProvisionServiceSpec extends Specification {
         mongoDBRepository.count() == 0
     }
 
-    def "validPersonnelFolder returns true if all mandatory fields are present"() {
-        when:
-        def test = provisionService.validPersonnelFolder().test(newPersonnelFolder('brukernavn-leder'))
-
-        then:
-        1 * organisationProperties.getAdministrativeUnitsExcluded() >> []
-        test
-    }
-
-    def "validPersonnelFolder returns false if subject and leader are the same"() {
-        when:
-        def test = provisionService.validPersonnelFolder().test(newPersonnelFolder('brukernavn'))
-
-        then:
-        !test
-    }
-
-    def "validPersonnelFolder returns false if workplace is included in list of excluded administrative units"() {
-        when:
-        def test = provisionService.validPersonnelFolder().test(newPersonnelFolder('brukernavn-leder'))
-
-        then:
-        1 * organisationProperties.getAdministrativeUnitsExcluded() >> ['organisasjonsid']
-        !test
-    }
-
-    def newPersonnelFolder(String username) {
+    def newPersonnelFolder(String username, String usernameLeader, String workplace) {
         def resource = new PersonalmappeResource(
                 navn: new Personnavn(
                         fornavn: 'fornavn',
@@ -126,9 +131,9 @@ class ProvisionServiceSpec extends Specification {
         )
 
         resource.addPerson(Link.with(Person.class, "fodselsnummer", "fodselsnummer"))
-        resource.addPersonalressurs(Link.with(Personalressurs.class, "brukernavn", "brukernavn"))
-        resource.addArbeidssted(Link.with(Organisasjonselement.class, "organisasjonsid", "organisasjonsid"))
-        resource.addLeder(Link.with(Personalressurs.class, "brukernavn", username))
+        resource.addPersonalressurs(Link.with(Personalressurs.class, "brukernavn", username))
+        resource.addArbeidssted(Link.with(Organisasjonselement.class, "organisasjonsid", workplace))
+        resource.addLeder(Link.with(Personalressurs.class, "brukernavn", usernameLeader))
 
         return resource
     }

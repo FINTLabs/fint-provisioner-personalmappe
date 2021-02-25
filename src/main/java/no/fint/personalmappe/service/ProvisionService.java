@@ -104,7 +104,7 @@ public class ProvisionService {
                 .map(MongoDBPersonalmappe::getUsername);
     }
 
-    public Mono<PersonalmappeResource> getPersonnelFolder(String username) {
+    private Mono<PersonalmappeResource> getPersonnelFolder(String username) {
         GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPHQL_QUERY, Collections.singletonMap("brukernavn", username));
 
         return fintRepository.post(GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
@@ -179,7 +179,7 @@ public class ProvisionService {
                 .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseHandlerService.errorHandler(ex, mongoDBPersonnelFolder)));
     }
 
-    public Predicate<PersonalmappeResource> validPersonnelFolder() {
+    private Predicate<PersonalmappeResource> validPersonnelFolder() {
         return personnelFolder -> {
             if (Objects.nonNull(personnelFolder.getNavn()) &&
                     !personnelFolder.getPersonalressurs().isEmpty() &&
