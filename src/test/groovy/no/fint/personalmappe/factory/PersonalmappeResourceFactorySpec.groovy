@@ -13,8 +13,8 @@ import java.time.LocalDateTime
 class PersonalmappeResourceFactorySpec extends Specification {
     PersonalmappeResourceFactory personalmappeResourceFactory = new PersonalmappeResourceFactory()
 
-    OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation(
-            personalressurskategori: ['F', 'M']
+    OrganisationProperties organisationProperties = new OrganisationProperties(
+            personnelResourceCategory: ['F', 'M']
     )
 
     def "given valid arbeidsforhold return personalmapperesource"() {
@@ -22,7 +22,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
         def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation, ['organisasjonsid'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisationProperties, ['organisasjonsid'])
 
         then:
         resource.navn.fornavn == 'fornavn'
@@ -41,7 +41,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
         def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation, ['organisasjonsid-2'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisationProperties, ['organisasjonsid-2'])
 
         then:
         resource.navn.fornavn == 'fornavn'
@@ -60,7 +60,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
         def personalressurs = getPersonalressurs('brukernavn', 'brukernavn', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation, ['organisasjonsid'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisationProperties, ['organisasjonsid'])
 
         then:
         resource.navn.fornavn == 'fornavn'
@@ -76,12 +76,12 @@ class PersonalmappeResourceFactorySpec extends Specification {
 
     def "given arbeidsforhold with invalid personalressurskategori return null"() {
         given:
-        OrganisationProperties.Organisation organisation = new OrganisationProperties.Organisation(personalressurskategori: ['S', 'T'])
+        OrganisationProperties organisationProperties = new OrganisationProperties(personnelResourceCategory: ['S', 'T'])
         def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'X', true, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation, ['organisasjonsid'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisationProperties, ['organisasjonsid'])
 
         then:
         resource.tittel == null
@@ -92,7 +92,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
         def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'F', false, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation, ['organisasjonsid'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisationProperties, ['organisasjonsid'])
 
         then:
         resource.tittel == null
@@ -103,7 +103,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
         def personalressurs = getPersonalressurs('brukernavn', 'brukernavn-leder', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().plusDays(15), LocalDateTime.now().plusDays(20))
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation, ['organisasjonsid'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisationProperties, ['organisasjonsid'])
 
         then:
         resource.tittel == null
@@ -115,7 +115,7 @@ class PersonalmappeResourceFactorySpec extends Specification {
         personalressurs.arbeidsforhold.push(getPersonalressurs('brukernavn', 'brukernavn-leder-2', 'brukernavn-leder-leder', 'organisasjonsid', 'F', true, LocalDateTime.now().plusDays(10), LocalDateTime.now().plusDays(20)).arbeidsforhold.first())
 
         when:
-        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisation, ['organisasjonsid'])
+        def resource = personalmappeResourceFactory.toPersonalmappeResource(personalressurs, organisationProperties, ['organisasjonsid'])
 
         then:
         resource.leder.first() == Link.with(Personalressurs.class, 'brukernavn', 'brukernavn-leder-1')

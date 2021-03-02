@@ -1,6 +1,5 @@
 package no.fint.personalmappe.repository;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
 import no.fint.personalmappe.model.GraphQLQuery;
@@ -31,7 +30,6 @@ public class FintRepository {
     private final OrganisationProperties organisationProperties;
     private final Authentication principal;
 
-    @Getter
     private final Map<String, Long> sinceTimestamp = Collections.synchronizedMap(new HashMap<>());
 
     public FintRepository(WebClient webClient, ReactiveOAuth2AuthorizedClientManager authorizedClientManager, OrganisationProperties organisationProperties, Authentication principal) {
@@ -41,12 +39,8 @@ public class FintRepository {
         this.principal = principal;
     }
 
-    public <T> Mono<T> get(String orgId, Class<T> clazz, URI uri) {
-        log.trace("({}) fetching: {}", orgId, uri);
-
-        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
-
-        return authorizedClient(organisation).flatMap(client ->
+    public <T> Mono<T> get(Class<T> clazz, URI uri) {
+        return authorizedClient().flatMap(client ->
                 webClient.get()
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))
@@ -55,21 +49,19 @@ public class FintRepository {
         );
     }
 
-    public <T> Mono<T> getUpdates(String orgId, Class<T> clazz, URI uri) {
-        Long since = sinceTimestamp.getOrDefault(orgId, 0L);
+    public <T> Mono<T> getUpdates(Class<T> clazz, URI uri) {
+        Long since = sinceTimestamp.getOrDefault(organisationProperties.getOrgId(), 0L);
 
-        return get(orgId, LastUpdated.class, UriComponentsBuilder.fromUri(uri).pathSegment("last-updated").build().toUri())
+        return get(LastUpdated.class, UriComponentsBuilder.fromUri(uri).pathSegment("last-updated").build().toUri())
                 .flatMap(lastUpdated -> {
-                    sinceTimestamp.put(orgId, lastUpdated.getLastUpdated());
+                    sinceTimestamp.put(organisationProperties.getOrgId(), lastUpdated.getLastUpdated());
 
-                    return get(orgId, clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
+                    return get(clazz, UriComponentsBuilder.fromUri(uri).queryParam("sinceTimeStamp", since).build().toUri());
                 });
     }
 
-    public <T> Mono<ResponseEntity<T>> getForEntity(String orgId, Class<T> clazz, URI uri) {
-        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
-
-        return authorizedClient(organisation).flatMap(client ->
+    public <T> Mono<ResponseEntity<T>> getForEntity(Class<T> clazz, URI uri) {
+        return authorizedClient().flatMap(client ->
                 webClient.get()
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))
@@ -78,10 +70,8 @@ public class FintRepository {
         );
     }
 
-    public <T> Mono<T> post(String orgId, Class<T> clazz, GraphQLQuery graphQLQuery, URI uri) {
-        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
-
-        return authorizedClient(organisation).flatMap(client ->
+    public <T> Mono<T> post(Class<T> clazz, GraphQLQuery graphQLQuery, URI uri) {
+        return authorizedClient().flatMap(client ->
                 webClient.post()
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))
@@ -91,10 +81,8 @@ public class FintRepository {
         );
     }
 
-    public Mono<ResponseEntity<Void>> postForEntity(String orgId, PersonalmappeResource personalmappeResource, URI uri) {
-        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
-
-        return authorizedClient(organisation).flatMap(client ->
+    public Mono<ResponseEntity<Void>> postForEntity(PersonalmappeResource personalmappeResource, URI uri) {
+        return authorizedClient().flatMap(client ->
                 webClient.post()
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))
@@ -104,10 +92,8 @@ public class FintRepository {
         );
     }
 
-    public <T> Mono<ResponseEntity<Void>> putForEntity(String orgId, T resource, URI uri) {
-        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
-
-        return authorizedClient(organisation).flatMap(client ->
+    public <T> Mono<ResponseEntity<Void>> putForEntity(T resource, URI uri) {
+        return authorizedClient().flatMap(client ->
                 webClient.put()
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))
@@ -117,21 +103,19 @@ public class FintRepository {
         );
     }
 
-    private Mono<OAuth2AuthorizedClient> authorizedClient(OrganisationProperties.Organisation organisation) {
-        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(organisation.getRegistration())
+    private Mono<OAuth2AuthorizedClient> authorizedClient() {
+        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(organisationProperties.getRegistration())
                 .principal(principal)
                 .attributes(attrs -> {
-                    attrs.put(OAuth2ParameterNames.USERNAME, organisation.getUsername());
-                    attrs.put(OAuth2ParameterNames.PASSWORD, organisation.getPassword());
+                    attrs.put(OAuth2ParameterNames.USERNAME, organisationProperties.getUsername());
+                    attrs.put(OAuth2ParameterNames.PASSWORD, organisationProperties.getPassword());
                 }).build();
 
         return authorizedClientManager.authorize(authorizeRequest);
     }
 
-    public Mono<ResponseEntity<Void>> headForEntity(String orgId, URI uri) {
-        OrganisationProperties.Organisation organisation = organisationProperties.getOrganisations().get(orgId);
-
-        return authorizedClient(organisation).flatMap(client ->
+    public Mono<ResponseEntity<Void>> headForEntity(URI uri) {
+        return authorizedClient().flatMap(client ->
                 webClient.head()
                         .uri(uri)
                         .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient(client))

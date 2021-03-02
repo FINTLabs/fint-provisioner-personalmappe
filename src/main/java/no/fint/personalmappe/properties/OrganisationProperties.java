@@ -3,27 +3,21 @@ package no.fint.personalmappe.properties;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Data
-@ConfigurationProperties("fint")
+@ConfigurationProperties("organisation")
 public class OrganisationProperties {
-    private Map<String, Organisation> organisations = new HashMap<>();
-
-    @Data
-    public static class Organisation {
-        private String username;
-        private String password;
-        private String registration;
-        private int bulkLimit;
-        private int historyLimit;
-        private boolean bulk;
-        private boolean delta;
-        private boolean arkivressurs;
-        private String[] personalressurskategori;
-        private String[] administrativeEnheterExcluded;
-        private List<String> transformationScripts;
-    }
+    private String orgId;
+    private String registration;
+    private String username;
+    private String password;
+    private long bulkLimit;
+    private int historyLimit;
+    private boolean bulk;
+    private boolean delta;
+    private boolean archiveResource;
+    private String[] personnelResourceCategory;
+    private String[] administrativeUnitsExcluded;
+    private List<String> transformationScripts;
 }
