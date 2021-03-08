@@ -17,9 +17,9 @@ import java.net.URI;
 
 @Slf4j
 @Service
-public class ResponseHandlerService {
+public class ResponseService {
 
-    public MongoDBPersonalmappe pendingHandler(String orgId, String id, PersonalmappeResource personalmappeResource) {
+    public MongoDBPersonalmappe pending(String orgId, String id, PersonalmappeResource personalmappeResource) {
         return MongoDBPersonalmappe.builder()
                 .id(id)
                 .orgId(orgId)
@@ -30,7 +30,7 @@ public class ResponseHandlerService {
                 .build();
     }
 
-    public MongoDBPersonalmappe pendingHandler(MongoDBPersonalmappe mongoDBPersonalmappe, PersonalmappeResource personalmappeResource) {
+    public MongoDBPersonalmappe pending(MongoDBPersonalmappe mongoDBPersonalmappe, PersonalmappeResource personalmappeResource) {
         mongoDBPersonalmappe.setUsername(PersonnelUtilities.getUsername(personalmappeResource));
         mongoDBPersonalmappe.setLeader(PersonnelUtilities.getLeader(personalmappeResource));
         mongoDBPersonalmappe.setWorkplace(PersonnelUtilities.getWorkplace(personalmappeResource));
@@ -40,7 +40,7 @@ public class ResponseHandlerService {
         return mongoDBPersonalmappe;
     }
 
-    public MongoDBPersonalmappe successHandler(MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Object> responseEntity) {
+    public MongoDBPersonalmappe success(MongoDBPersonalmappe mongoDBPersonalmappe, ResponseEntity<Object> responseEntity) {
         mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
         mongoDBPersonalmappe.setAssociation(responseEntity.getHeaders().getLocation());
         mongoDBPersonalmappe.setMessage(null);
@@ -48,7 +48,7 @@ public class ResponseHandlerService {
         return mongoDBPersonalmappe;
     }
 
-    public MongoDBPersonalmappe errorHandler(WebClientResponseException response, MongoDBPersonalmappe mongoDBPersonalmappe) {
+    public MongoDBPersonalmappe error(WebClientResponseException response, MongoDBPersonalmappe mongoDBPersonalmappe) {
         switch (response.getStatusCode()) {
             case CONFLICT:
                 PersonalmappeResources personalmappeResources = new PersonalmappeResources();
@@ -71,10 +71,12 @@ public class ResponseHandlerService {
                 break;
             case BAD_REQUEST:
                 mongoDBPersonalmappe.setStatus(HttpStatus.BAD_REQUEST);
+                mongoDBPersonalmappe.setAssociation(null);
                 mongoDBPersonalmappe.setMessage(response.getResponseBodyAsString());
                 break;
             case INTERNAL_SERVER_ERROR:
                 mongoDBPersonalmappe.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+                mongoDBPersonalmappe.setAssociation(null);
                 mongoDBPersonalmappe.setMessage(response.getResponseBodyAsString());
                 break;
             case GONE:

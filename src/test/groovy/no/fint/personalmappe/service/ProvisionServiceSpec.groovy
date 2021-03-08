@@ -25,7 +25,7 @@ import spock.lang.Specification
 @DataMongoTest
 class ProvisionServiceSpec extends Specification {
     FintRepository fintRepository = Mock()
-    ResponseHandlerService responseHandlerService = Mock()
+    ResponseService responseHandlerService = Mock()
     OrganisationProperties organisationProperties = Mock()
     PersonalmappeResourceFactory personalmappeResourceFactory = Mock()
     PolicyService policyService = Mock()
@@ -52,10 +52,10 @@ class ProvisionServiceSpec extends Specification {
         1 * organisationProperties.getOrgId() >> 'org-id'
 
         1 * fintRepository.postForEntity(_, _) >> Mono.just(ResponseEntity.accepted().location(URI.create('/status')).build())
-        1 * responseHandlerService.pendingHandler(_, _, _) >> newMongoDbPersonnelFolder(HttpStatus.ACCEPTED)
+        1 * responseHandlerService.pending(_, _, _) >> newMongoDbPersonnelFolder(HttpStatus.ACCEPTED)
 
         1 * fintRepository.getForEntity(_, _) >> Mono.just(ResponseEntity.created(URI.create('/resource')).build())
-        1 * responseHandlerService.successHandler(_, _) >> newMongoDbPersonnelFolder(HttpStatus.CREATED)
+        1 * responseHandlerService.success(_, _) >> newMongoDbPersonnelFolder(HttpStatus.CREATED)
 
         when:
         def flux = provisionService.run(['username'], 1)
