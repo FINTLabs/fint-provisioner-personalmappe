@@ -63,15 +63,15 @@ public class ProvisionService {
     private List<String> administrativeUnitSystemIds = new ArrayList<>();
 
     private final FintRepository fintRepository;
-    private final ResponseHandlerService responseHandlerService;
+    private final ResponseService responseService;
     private final MongoDBRepository mongoDBRepository;
     private final PersonalmappeResourceFactory personalmappeResourceFactory;
     private final OrganisationProperties organisationProperties;
     private final PolicyService policyService;
 
-    public ProvisionService(FintRepository fintRepository, ResponseHandlerService responseHandlerService, PersonalmappeResourceFactory personalmappeResourceFactory, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, PolicyService policyService) {
+    public ProvisionService(FintRepository fintRepository, ResponseService responseService, PersonalmappeResourceFactory personalmappeResourceFactory, OrganisationProperties organisationProperties, MongoDBRepository mongoDBRepository, PolicyService policyService) {
         this.fintRepository = fintRepository;
-        this.responseHandlerService = responseHandlerService;
+        this.responseService = responseService;
         this.personalmappeResourceFactory = personalmappeResourceFactory;
         this.organisationProperties = organisationProperties;
         this.mongoDBRepository = mongoDBRepository;
@@ -137,7 +137,7 @@ public class ProvisionService {
 
         return fintRepository.postForEntity(personnelFolder, personnelFolderEndpoint)
                 .flatMap(responseEntity -> {
-                    MongoDBPersonalmappe mongoDBPersonalmappe = responseHandlerService.pendingHandler(orgId, id, personnelFolder);
+                    MongoDBPersonalmappe mongoDBPersonalmappe = responseService.pending(orgId, id, personnelFolder);
 
                     return status(mongoDBPersonalmappe, responseEntity);
                 })
@@ -157,7 +157,7 @@ public class ProvisionService {
 
         return responseEntity
                 .flatMap(entity -> {
-                    MongoDBPersonalmappe dbPersonalmappe = responseHandlerService.pendingHandler(mongoDBPersonnelFolder, personnelFolder);
+                    MongoDBPersonalmappe dbPersonalmappe = responseService.pending(mongoDBPersonnelFolder, personnelFolder);
 
                     return status(dbPersonalmappe, entity);
                 })
@@ -171,12 +171,12 @@ public class ProvisionService {
                         throw new FinalStatusPendingException();
                     }
 
-                    return responseHandlerService.successHandler(mongoDBPersonnelFolder, entity);
+                    return responseService.success(mongoDBPersonnelFolder, entity);
                 })
                 .retryWhen(Retry.backoff(10, Duration.ofSeconds(1))
                         .filter(FinalStatusPendingException.class::isInstance)
                         .doAfterRetry(exception -> log.info("{}", exception)))
-                .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseHandlerService.errorHandler(ex, mongoDBPersonnelFolder)));
+                .onErrorResume(WebClientResponseException.class, ex -> Mono.just(responseService.error(ex, mongoDBPersonnelFolder)));
     }
 
     private Predicate<PersonalmappeResource> validPersonnelFolder() {
