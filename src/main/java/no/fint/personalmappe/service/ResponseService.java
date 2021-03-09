@@ -76,7 +76,6 @@ public class ResponseService {
                 break;
             case INTERNAL_SERVER_ERROR:
                 mongoDBPersonalmappe.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
-                mongoDBPersonalmappe.setAssociation(null);
                 mongoDBPersonalmappe.setMessage(response.getResponseBodyAsString());
                 break;
             case GONE:
