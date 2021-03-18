@@ -1,6 +1,6 @@
 package no.fint.personalmappe.policy.helper
 
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource
 import no.fint.personalmappe.TestFactory
 import no.fint.personalmappe.exception.UnableToGetLink
 import spock.lang.Specification

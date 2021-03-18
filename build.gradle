@@ -6,7 +6,6 @@ plugins {
 }
 
 group = 'no.fint'
-version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '1.8'
 
 configurations {
@@ -49,8 +48,8 @@ dependencies {
 	testImplementation 'com.squareup.okhttp3:okhttp:4.3.1'
 	testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.2.0'
 
-	implementation 'no.fint:fint-administrasjon-resource-model-java:3.4.0'
-	implementation 'no.fint:fint-felles-resource-model-java:3.4.0'
-	implementation 'no.fint:fint-arkiv-model-java:3.5.0-alpha-2'
+	implementation "no.fint:fint-arkiv-resource-model-java:${apiVersion}"
+	implementation "no.fint:fint-administrasjon-resource-model-java:${apiVersion}"
+	implementation "no.fint:fint-felles-resource-model-java:${apiVersion}"
 	implementation 'no.fint:fint-model-resource:0.3.3'
 }

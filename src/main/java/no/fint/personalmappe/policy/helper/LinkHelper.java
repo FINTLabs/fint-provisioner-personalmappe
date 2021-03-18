@@ -1,7 +1,7 @@
 package no.fint.personalmappe.policy.helper;
 
 import no.fint.model.resource.Link;
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.fint.personalmappe.exception.UnableToGetLink;
 import org.apache.commons.lang3.StringUtils;
 
@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 public class LinkHelper {
 
-    private PersonalmappeResource personalmappeResource;
+    private final PersonalmappeResource personalmappeResource;
     private String property;
     private String identificator;
 

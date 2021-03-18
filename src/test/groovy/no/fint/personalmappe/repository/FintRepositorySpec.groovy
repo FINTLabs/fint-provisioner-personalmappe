@@ -2,8 +2,8 @@ package no.fint.personalmappe.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import no.fint.model.resource.AbstractCollectionResources
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
 import no.fint.model.resource.administrasjon.personal.PersonalressursResources
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource
 import no.fint.personalmappe.model.GraphQLPersonalmappe
 import no.fint.personalmappe.model.GraphQLQuery
 import no.fint.personalmappe.properties.OrganisationProperties

@@ -1,7 +1,7 @@
 package no.fint.personalmappe.repository;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.fint.personalmappe.model.GraphQLQuery;
 import no.fint.personalmappe.model.LastUpdated;
 import no.fint.personalmappe.properties.OrganisationProperties;

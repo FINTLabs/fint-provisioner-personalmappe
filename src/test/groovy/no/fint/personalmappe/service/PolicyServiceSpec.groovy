@@ -1,7 +1,7 @@
 package no.fint.personalmappe.service
 
 
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource
 import no.fint.personalmappe.TestFactory
 import spock.lang.Specification
 

@@ -1,7 +1,7 @@
 package no.fint.personalmappe.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.fint.personalmappe.model.MongoDBPersonalmappe;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import no.fint.personalmappe.repository.MongoDBRepository;

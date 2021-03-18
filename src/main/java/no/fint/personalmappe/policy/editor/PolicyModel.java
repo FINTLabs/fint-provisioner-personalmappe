@@ -3,7 +3,7 @@ package no.fint.personalmappe.policy.editor;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
 
 @Data
 @AllArgsConstructor

@@ -2,7 +2,7 @@ package no.fint.personalmappe
 
 import no.fint.model.felles.kompleksedatatyper.Identifikator
 import no.fint.model.resource.Link
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource
 
 class TestFactory {
 

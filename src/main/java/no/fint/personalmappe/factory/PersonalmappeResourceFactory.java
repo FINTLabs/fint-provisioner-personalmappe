@@ -5,8 +5,7 @@ import no.fint.model.administrasjon.personal.Personalressurs;
 import no.fint.model.felles.Person;
 import no.fint.model.felles.kompleksedatatyper.Personnavn;
 import no.fint.model.resource.Link;
-import no.fint.model.resource.administrasjon.arkiv.PartsinformasjonResource;
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.fint.personalmappe.model.GraphQLPersonalmappe;
 import no.fint.personalmappe.properties.OrganisationProperties;
 import org.springframework.stereotype.Component;
@@ -46,7 +45,7 @@ public class PersonalmappeResourceFactory {
                 }
             });
 
-            personalmappeResource.setPart(Collections.singletonList(new PartsinformasjonResource()));
+            // TODO? personalmappeResource.setPart(Collections.singletonList(new PartResource()));
             personalmappeResource.setTittel("DUMMY");
         });
 

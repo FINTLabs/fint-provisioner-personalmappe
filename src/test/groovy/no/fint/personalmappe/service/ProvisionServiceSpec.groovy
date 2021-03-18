@@ -5,8 +5,8 @@ import no.fint.model.administrasjon.personal.Personalressurs
 import no.fint.model.felles.Person
 import no.fint.model.felles.kompleksedatatyper.Personnavn
 import no.fint.model.resource.Link
-import no.fint.model.resource.administrasjon.arkiv.PartsinformasjonResource
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource
+import no.fint.model.resource.arkiv.noark.PartResource
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource
 import no.fint.personalmappe.factory.PersonalmappeResourceFactory
 import no.fint.personalmappe.model.GraphQLPersonalmappe
 import no.fint.personalmappe.model.MongoDBPersonalmappe
@@ -126,7 +126,7 @@ class ProvisionServiceSpec extends Specification {
                         mellomnavn: 'mellomnavn',
                         etternavn: 'ettternavn'
                 ),
-                part: [new PartsinformasjonResource()],
+                part: [new PartResource()],
                 tittel: 'DUMMY',
         )
 

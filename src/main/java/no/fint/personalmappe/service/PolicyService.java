@@ -1,7 +1,7 @@
 package no.fint.personalmappe.service;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.administrasjon.personal.PersonalmappeResource;
+import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.fint.personalmappe.policy.helper.LinkHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
