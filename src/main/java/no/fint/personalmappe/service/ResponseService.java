@@ -51,21 +51,14 @@ public class ResponseService {
     public MongoDBPersonalmappe error(WebClientResponseException response, MongoDBPersonalmappe mongoDBPersonalmappe) {
         switch (response.getStatusCode()) {
             case CONFLICT:
-                PersonalmappeResources personalmappeResources = new PersonalmappeResources();
                 try {
-                    personalmappeResources = new ObjectMapper().readValue(response.getResponseBodyAsString(), PersonalmappeResources.class);
+                    PersonalmappeResource personalmappeResource = new ObjectMapper().readValue(response.getResponseBodyAsString(), PersonalmappeResource.class);
+                    mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
+                    mongoDBPersonalmappe.setAssociation(getSelfLink(personalmappeResource));
+                    mongoDBPersonalmappe.setMessage(null);
                 } catch (JsonProcessingException e) {
                     mongoDBPersonalmappe.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
                     mongoDBPersonalmappe.setMessage(e.getMessage());
-                }
-
-                if (personalmappeResources.getTotalItems() == 1) {
-                    mongoDBPersonalmappe.setStatus(HttpStatus.CREATED);
-                    mongoDBPersonalmappe.setAssociation(getSelfLink(personalmappeResources.getContent().get(0)));
-                    mongoDBPersonalmappe.setMessage(null);
-                } else {
-                    mongoDBPersonalmappe.setStatus(HttpStatus.CONFLICT);
-                    mongoDBPersonalmappe.setMessage("More than one personalmappe in conflict");
                 }
 
                 break;
