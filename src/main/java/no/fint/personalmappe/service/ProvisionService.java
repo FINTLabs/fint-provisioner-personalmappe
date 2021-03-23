@@ -98,8 +98,8 @@ public class ProvisionService {
         return Flux.fromIterable(usernames)
                 .limitRequest(limit)
                 .delayElements(Duration.ofMillis(1000))
-                .flatMap(username -> getPersonnelFolder(username)
-                        .flatMap(this::updatePersonnelFolder))
+                .flatMap(this::getPersonnelFolder)
+                .concatMap(this::updatePersonnelFolder)
                 .doOnNext(this::save)
                 .map(MongoDBPersonalmappe::getUsername);
     }
