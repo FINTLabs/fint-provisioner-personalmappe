@@ -98,8 +98,8 @@ public class ProvisionService {
         return Flux.fromIterable(usernames)
                 .limitRequest(limit)
                 .delayElements(Duration.ofMillis(1000))
-                .flatMap(this::getPersonnelFolder)
-                .concatMap(this::updatePersonnelFolder)
+                .concatMap(this::getPersonnelFolder)
+                .flatMap(this::updatePersonnelFolder)
                 .doOnNext(this::save)
                 .map(MongoDBPersonalmappe::getUsername);
     }
@@ -260,6 +260,7 @@ public class ProvisionService {
                 .map(Identifikator::getIdentifikatorverdi)
                 .collectList()
                 .blockOptional()
+                .filter(ids -> !ids.isEmpty())
                 .orElseThrow(IllegalArgumentException::new);
     }
 

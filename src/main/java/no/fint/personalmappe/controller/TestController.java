@@ -22,6 +22,6 @@ public class TestController {
 
     @GetMapping("/status")
     public ResponseEntity<?> dummyStatus() {
-        return ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("http://localhost:8080/put")).build();
+        return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("http://localhost:8080/put")).build();
     }
 }
