@@ -256,11 +256,12 @@ public class ProvisionService {
     public void updateAdministrativeUnitSystemIds() {
         administrativeUnitSystemIds = fintRepository.get(AdministrativEnhetResources.class, administrativeUnitEndpoint)
                 .flatMapIterable(AdministrativEnhetResources::getContent)
-                .map(AdministrativEnhetResource::getSystemId)
-                .map(Identifikator::getIdentifikatorverdi)
+                .flatMapIterable(AdministrativEnhetResource::getOrganisasjonselement)
+                .map(Link::getHref)
+                .map(id -> StringUtils.substringAfterLast(id, "/"))
                 .collectList()
                 .blockOptional()
-                .filter(ids -> !ids.isEmpty())
+                .filter(ids -> ids.size() > 0)
                 .orElseThrow(IllegalArgumentException::new);
     }
 
