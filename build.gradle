@@ -17,7 +17,7 @@ configurations {
 repositories {
 	jcenter()
 	mavenCentral()
-	maven { url "https://dl.bintray.com/fint/maven" }
+	maven { url 'https://repo.fintlabs.no/releases' }
 }
 
 dependencies {
@@ -51,5 +51,5 @@ dependencies {
 	implementation "no.fint:fint-arkiv-resource-model-java:${apiVersion}"
 	implementation "no.fint:fint-administrasjon-resource-model-java:${apiVersion}"
 	implementation "no.fint:fint-felles-resource-model-java:${apiVersion}"
-	implementation 'no.fint:fint-model-resource:0.3.3'
+	implementation 'no.fint:fint-model-resource:0.4.1'
 }
