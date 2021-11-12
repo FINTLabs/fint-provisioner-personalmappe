@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'no.fint'
-sourceCompatibility = '1.8'
+sourceCompatibility = '11'
 
 configurations {
 	compileOnly {
@@ -52,4 +52,6 @@ dependencies {
 	implementation "no.fint:fint-administrasjon-resource-model-java:${apiVersion}"
 	implementation "no.fint:fint-felles-resource-model-java:${apiVersion}"
 	implementation 'no.fint:fint-model-resource:0.4.1'
+
+	targetCompatibility = JavaVersion.VERSION_11
 }
