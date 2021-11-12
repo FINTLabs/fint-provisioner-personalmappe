@@ -35,14 +35,15 @@ public class PersonalmappeResourceFactory {
             getPerson(forhold).map(Link.apply(Person.class, "fodselsnummer")).ifPresent(personalmappeResource::addPerson);
             getPersonalressurs(forhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(personalmappeResource::addPersonalressurs);
 
-            Optional<String> leder = getLeder(forhold);
-            if (leder.isEmpty() || getPersonalressurs(forhold).filter(leder.get()::equalsIgnoreCase).isPresent() || !getArbeidssted(forhold).filter(administrativEnheter::contains).isPresent()) {
-                getLedersLeder(forhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(personalmappeResource::addLeder);
-                getLedersArbeidssted(forhold).map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(personalmappeResource::addArbeidssted);
-            } else {
-                personalmappeResource.addLeder(Link.with(Personalressurs.class, "brukernavn", leder.get()));
-                getArbeidssted(forhold).map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(personalmappeResource::addArbeidssted);
-            }
+            getLeder(forhold).ifPresent(leder -> {
+                if (getPersonalressurs(forhold).filter(leder::equalsIgnoreCase).isPresent() || !getArbeidssted(forhold).filter(administrativEnheter::contains).isPresent()) {
+                    getLedersLeder(forhold).map(Link.apply(Personalressurs.class, "brukernavn")).ifPresent(personalmappeResource::addLeder);
+                    getLedersArbeidssted(forhold).map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(personalmappeResource::addArbeidssted);
+                } else {
+                    personalmappeResource.addLeder(Link.with(Personalressurs.class, "brukernavn", leder));
+                    getArbeidssted(forhold).map(Link.apply(Organisasjonselement.class, "organisasjonsid")).ifPresent(personalmappeResource::addArbeidssted);
+                }
+            });
 
             // TODO? personalmappeResource.setPart(Collections.singletonList(new PartResource()));
             personalmappeResource.setTittel("DUMMY");
