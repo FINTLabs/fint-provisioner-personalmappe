@@ -1,0 +1,44 @@
+---
+name: CD
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: [closed]
+  push:
+    branches-ignore:
+      - master
+
+jobs:
+
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: fintlabsacr.azurecr.io/${{ github.event.repository.name }}
+          tags: |
+            type=ref,event=branch,suffix=-{{sha}}
+            type=ref,event=pr,suffix=-{{sha}}
+            type=sha,prefix={{date 'YYYY-MM-DD-'}},enable={{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Login to ACR
+        uses: Azure/docker-login@v1
+        if: github.actor != 'dependabot[bot]'
+        with:
+          login-server: fintlabsacr.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: ${{ github.actor != 'dependabot[bot]' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

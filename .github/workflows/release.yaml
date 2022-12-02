@@ -1,0 +1,43 @@
+---
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+      labels: ${{ steps.meta.outputs.labels }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: fintlabsacr.azurecr.io/${{ github.event.repository.name }}
+          flavor: |
+            latest=false
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - name: Login to ACR
+        uses: Azure/docker-login@v1
+        if: github.actor != 'dependabot[bot]'
+        with:
+          login-server: fintlabsacr.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: ${{ github.actor != 'dependabot[bot]' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
