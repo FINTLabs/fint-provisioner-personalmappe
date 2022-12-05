@@ -1,12 +1,12 @@
 plugins {
-	id 'org.springframework.boot' version '2.7.4'
+	id 'org.springframework.boot' version '2.3.3.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
 	id 'java'
 	id 'groovy'
 }
 
 group = 'no.fint'
-sourceCompatibility = '17'
+sourceCompatibility = '11'
 
 configurations {
 	compileOnly {
@@ -38,15 +38,12 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
-	implementation 'org.openjdk.nashorn:nashorn-core:15.4'
-
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation 'org.spockframework:spock-spring:2.3-groovy-4.0'
-	testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
+	testImplementation 'org.spockframework:spock-spring:1.3-groovy-2.5'
 	testImplementation 'com.squareup.okhttp3:mockwebserver:4.3.1'
 	testImplementation 'com.squareup.okhttp3:okhttp:4.3.1'
 	testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.2.0'
@@ -56,5 +53,5 @@ dependencies {
 	implementation "no.fint:fint-felles-resource-model-java:${apiVersion}"
 	implementation 'no.fint:fint-model-resource:0.4.1'
 
-	targetCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_11
 }
