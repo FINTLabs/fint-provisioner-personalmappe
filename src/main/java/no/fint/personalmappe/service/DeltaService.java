@@ -51,7 +51,5 @@ public class DeltaService {
         log.info("Delta provision {} users", usernames.size());
 
         provisionService.run(usernames, usernames.size()).subscribe(log::trace);
-
-        log.info("Delta provision of {} users now completed.", usernames.size());
     }
 }

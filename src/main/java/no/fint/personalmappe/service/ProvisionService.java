@@ -101,7 +101,8 @@ public class ProvisionService {
                 .concatMap(this::getPersonnelFolder)
                 .flatMap(this::updatePersonnelFolder)
                 .doOnNext(this::save)
-                .map(MongoDBPersonalmappe::getUsername);
+                .map(MongoDBPersonalmappe::getUsername)
+                .doOnComplete(() -> log.info("Provisioning of {} user(s) have now completed.", usernames.size()));
     }
 
     private Mono<PersonalmappeResource> getPersonnelFolder(String username) {

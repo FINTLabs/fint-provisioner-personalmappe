@@ -57,7 +57,5 @@ public class BulkService {
         log.info("Bulk provision {} of {} users", limit, usernames.size());
 
         provisionService.run(usernames, limit).subscribe(log::trace);
-
-        log.info("Bulk provision ({} of {} users) now completed.", limit, usernames.size());
     }
 }
