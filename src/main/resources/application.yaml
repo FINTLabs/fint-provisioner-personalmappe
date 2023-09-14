@@ -14,6 +14,6 @@ spring:
               - fint-client
             authorization-grant-type: password
             provider: fint
-      provider:
-        fint:
-          token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
+        provider:
+          fint:
+            token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token
