@@ -1,0 +1,19 @@
+organisation:
+  password: ${fint.core.oauth2.username}
+  username: ${fint.core.oauth2.password}
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          asset:
+            client-id: ${fint.core.oauth2.client-id}
+            client-secret: ${fint.core.oauth2.client-secret}
+            scope:
+              - fint-client
+            authorization-grant-type: password
+            provider: fint
+      provider:
+        fint:
+          token-uri: https://idp.felleskomponent.no/nidp/oauth/nam/token

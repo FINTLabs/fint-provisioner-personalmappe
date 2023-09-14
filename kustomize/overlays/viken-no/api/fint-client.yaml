@@ -1,0 +1,21 @@
+apiVersion: fintlabs.no/v1alpha1
+kind: FintClient
+metadata:
+  name: personalmappe-api
+  namespace: viken-no
+  labels:
+    app.kubernetes.io/name: personalmappe-provisioner
+    app.kubernetes.io/instance: personalmappe-provisioner_viken-no
+    app.kubernetes.io/version: latest
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: arkiv
+    fintlabs.no/team: arkiv
+    fintlabs.no/org-id: viken.no
+
+spec:
+  orgId: viken.no
+  note: Brukes av personalmappe-provisioner service.
+  components:
+    - administrasjon_kodeverk
+    - administrasjon_personal
+    - administrasjon_organisasjon

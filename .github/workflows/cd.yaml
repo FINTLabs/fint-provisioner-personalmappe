@@ -47,10 +47,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        org: [ viken-no ]
-        cluster: [ aks-api-fint-2022-02-08 ]
+        org: [ bfk-no ]
+        cluster: [ aks-beta-fint-2021-11-23 ]
         include:
-          - cluster: aks-api-fint-2022-02-08
+          - cluster: aks-beta-fint-2021-11-23
             deploy-every-branch: true
 
     steps:
