@@ -1,4 +1,4 @@
-FROM ghcr.io/fintlabs/fint-personalmappe-frontend:ready-for-action-cde2eac as client
+FROM ghcr.io/fintlabs/fint-personalmappe-frontend:latest as client
 
 FROM gradle:6.3.0-jdk11 as builder
 USER root
