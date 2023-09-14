@@ -14,11 +14,11 @@ spec:
             - secretRef:
                 name: personalmappe-beta
           env:
-            - {name: fint.endpoints.graphql, value: https://api.felleskomponent.no/graphql/graphql}
-            - {name: fint.endpoints.personnel-resource, value: https://api.felleskomponent.no/administrasjon/personal/personalressurs}
-            - {name: fint.endpoints.personnel-folder, value: https://api.felleskomponent.no/arkiv/personal/personalmappe}
-            - {name: fint.endpoints.administrative-unit, value: https://api.felleskomponent.no/arkiv/noark/administrativenhet}
-            - {name: fint.endpoints.archive-resource, value: https://api.felleskomponent.no/arkiv/noark/arkivressurs}
+            - {name: fint.endpoints.graphql, value: https://beta.felleskomponent.no/graphql/graphql}
+            - {name: fint.endpoints.personnel-resource, value: https://beta.felleskomponent.no/administrasjon/personal/personalressurs}
+            - {name: fint.endpoints.personnel-folder, value: https://beta.felleskomponent.no/arkiv/personal/personalmappe}
+            - {name: fint.endpoints.administrative-unit, value: https://beta.felleskomponent.no/arkiv/noark/administrativenhet}
+            - {name: fint.endpoints.archive-resource, value: https://beta.felleskomponent.no/arkiv/noark/arkivressurs}
             - {name: fint.cron.bulk, value: "0 0 18 * * MON-FRI"}
             - {name: fint.cron.delta, value: "0 0 8-16 * * MON-FRI"}
             - {name: organisation.bulk, value: "true"}
