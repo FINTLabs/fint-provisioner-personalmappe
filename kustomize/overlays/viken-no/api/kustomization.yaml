@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# namespace: viken-no
+
+resources:
+  - ../../../base
+  - onepassword.yaml
+#  - deployment.yaml
+
+#commonLabels:
+#  app.kubernetes.io/instance: adapter-faks_bym-oslo-kommune-no
+#  fintlabs.no/org-id: bym.oslo.kommune.no
+
+# patches:
+
+#  - target:
+#      kind: Deployment
+#      name: adapter-faks
+#    path: deployment.yaml
+
+#  - target:
+#      kind: Deployment
+#      name: adapter-faks
+#    patch: |-
+#      - op: replace
+#        path: "/metadata/name"
+#        value: "adapter-faks-bya-oslo"
+#      - op: replace
+#        path: "/spec/selector/matchLabels/app"
+#        value: "adapter-faks-bya-oslo"
+#      - op: replace
+#        path: "/spec/template/metadata/labels/app"
+#        value: "adapter-faks-bya-oslo"
+#      - op: replace
+#        path: /spec/template/spec/containers/0/name
+#        value: "adapter-faks-bya-oslo"
