@@ -1,0 +1,103 @@
+name: CD
+
+on: push
+
+jobs:
+
+  build-and-publish:
+    runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+    env:
+      DOCKER_BUILDKIT: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch,suffix=-{{sha}}
+            type=ref,event=pr,suffix=-{{sha}}
+            type=sha,prefix={{date 'YYYY-MM-DD-'}},enable={{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          push: ${{ github.actor != 'dependabot[bot]' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy-to-aks:
+    name: ${{ matrix.org }}-${{ matrix.cluster }}
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    needs: build-and-publish
+    strategy:
+      fail-fast: false
+      matrix:
+        org: [ viken-no ]
+        cluster: [ aks-api-fint-2022-02-08 ]
+        include:
+          - cluster: aks-api-fint-2022-02-08
+            deploy-every-branch: true
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get environment
+        id: environment
+        run: |
+          echo "name=$(cut -d\- -f2 <<< ${{ matrix.cluster }})" >> $GITHUB_OUTPUT
+
+      - name: Bake manifests with Kustomize
+        id: bake
+        uses: azure/k8s-bake@v2
+        with:
+          renderEngine: 'kustomize'
+          kustomizationPath: 'kustomize/overlays/${{ matrix.org }}/${{ steps.environment.outputs.name }}'
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: "${{ secrets[format('AKS_{0}_FINT_GITHUB', steps.environment.outputs.name)] }}"
+
+      - name: Set the target cluster
+        uses: azure/aks-set-context@v3
+        with:
+          cluster-name: ${{ matrix.cluster }}
+          resource-group: rg-aks-${{ steps.environment.outputs.name }}
+          admin: true
+
+      - if: github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && matrix.deploy-every-branch != true
+        run: |
+          {
+            echo "## Dry run - not a real deploy"
+            echo "To deploy, merge to ${{ github.event.repository.default_branch }}." 
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Get namespace from config file
+        id: namespace
+        run: |
+          namespace=$(yq '.metadata.namespace' ${{ steps.bake.outputs.manifestsBundle }} | head -n 1 | sed 's/^null$/default/')
+          echo "name=$namespace" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Kubernetes
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || matrix.deploy-every-branch == true
+        uses: azure/k8s-deploy@v4
+        with:
+          action: deploy
+          manifests: ${{ steps.bake.outputs.manifestsBundle }}
+          images: ${{ matrix.use-image-from-overlay && 'none:none' || needs.build-and-publish.outputs.tags }}
+          namespace: ${{ steps.namespace.outputs.name }}
