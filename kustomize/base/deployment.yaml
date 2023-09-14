@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: provisioner-personalmappe-viken
-          image: fintlabsacr.azurecr.io/fint-provisioner-personalmappe:the-metrics-28c8438
+          image: ghcr.io/fintlabs/fint-provisioner-personalmappe:latest
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -45,8 +45,7 @@ spec:
             - {name: TZ, value: Europe/Oslo}
             - {name: JAVA_TOOL_OPTIONS, value: '-XX:+ExitOnOutOfMemoryError -Xmx3G -verbose:gc'}
             - {name: logging.level.no.fint, value: INFO}
-            - name: management.endpoints.web.exposure.include
-              value: "health,metrics,prometheus"
+            - {name: management.endpoints.web.exposure.include, value: "health,metrics,prometheus"}
             - {name: fint.endpoints.graphql, value: https://api.felleskomponent.no/graphql/graphql}
             - {name: fint.endpoints.personnel-resource, value: https://api.felleskomponent.no/administrasjon/personal/personalressurs}
             - {name: fint.endpoints.personnel-folder, value: https://api.felleskomponent.no/arkiv/personal/personalmappe}

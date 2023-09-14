@@ -93,11 +93,11 @@ jobs:
           namespace=$(yq '.metadata.namespace' ${{ steps.bake.outputs.manifestsBundle }} | head -n 1 | sed 's/^null$/default/')
           echo "name=$namespace" >> $GITHUB_OUTPUT
 
-#      - name: Deploy to Kubernetes
-#        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || matrix.deploy-every-branch == true
-#        uses: azure/k8s-deploy@v4
-#        with:
-#          action: deploy
-#          manifests: ${{ steps.bake.outputs.manifestsBundle }}
-#          images: ${{ matrix.use-image-from-overlay && 'none:none' || needs.build-and-publish.outputs.tags }}
-#          namespace: ${{ steps.namespace.outputs.name }}
+      - name: Deploy to Kubernetes
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || matrix.deploy-every-branch == true
+        uses: azure/k8s-deploy@v4
+        with:
+          action: deploy
+          manifests: ${{ steps.bake.outputs.manifestsBundle }}
+          images: ${{ matrix.use-image-from-overlay && 'none:none' || needs.build-and-publish.outputs.tags }}
+          namespace: ${{ steps.namespace.outputs.name }}
