@@ -19,6 +19,6 @@ spec:
     - administrasjon_kodeverk
     - administrasjon_personal
     - administrasjon_organisasjon
-    - arkiv-kodeverk
-    - arkiv-noark
-    - arkiv-personal
+    - arkiv_kodeverk
+    - arkiv_noark
+    - arkiv_personal
