@@ -29,3 +29,4 @@ spec:
             - {name: organisation.archive-resource, value: "false"}
             - {name: organisation.history-limit, value: "5"}
             - {name: organisation.org-id, value: bfk-no}
+            - {name: logging.level.no.fint, value: TRACE}
