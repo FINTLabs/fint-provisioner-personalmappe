@@ -115,7 +115,7 @@ public class ProvisionService {
                         .orElseGet(PersonalmappeResource::new))
                 .filter(validPersonnelFolder())
                 .onErrorResume(error -> {
-                    log.error("{} - {}", username, error.getMessage());
+                    log.error("Error getting personnel folder for {} with error message: {}", username, error.getMessage());
                     return Mono.empty();
                 });
     }
@@ -142,7 +142,7 @@ public class ProvisionService {
 
                     return status(mongoDBPersonalmappe, responseEntity);
                 })
-                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", PersonnelUtilities.getUsername(personnelFolder), clientResponse.getMessage()));
+                .doOnError(WebClientResponseException.class, clientResponse -> log.error("Error creating personnel folder for {} with error message: {}", PersonnelUtilities.getUsername(personnelFolder), clientResponse.getMessage()));
     }
 
     private Mono<MongoDBPersonalmappe> update(PersonalmappeResource personnelFolder, MongoDBPersonalmappe mongoDBPersonnelFolder) {
@@ -162,7 +162,7 @@ public class ProvisionService {
 
                     return status(dbPersonalmappe, entity);
                 })
-                .doOnError(WebClientResponseException.class, clientResponse -> log.error("{} - {}", PersonnelUtilities.getUsername(personnelFolder), clientResponse.getMessage()));
+                .doOnError(WebClientResponseException.class, clientResponse -> log.error("Error updating personnel folder for {} with error message: {}", PersonnelUtilities.getUsername(personnelFolder), clientResponse.getMessage()));
     }
 
     private Mono<MongoDBPersonalmappe> status(MongoDBPersonalmappe mongoDBPersonnelFolder, ResponseEntity<Void> responseEntity) {
@@ -194,7 +194,6 @@ public class ProvisionService {
 
                 if (identical.isPresent()) {
                     log.trace("Identical subject and leader for personnel folder: {}", PersonnelUtilities.getUsername(personnelFolder));
-
                     return false;
                 }
 
@@ -214,7 +213,7 @@ public class ProvisionService {
         try {
             mongoDBRepository.save(mongoDBPersonnelFolder);
         } catch (OptimisticLockingFailureException | MongoBulkWriteException e) {
-            log.error("{} -> {}", e.getMessage(), mongoDBPersonnelFolder);
+            log.error("Error saving to database {} -> {}", e.getMessage(), mongoDBPersonnelFolder);
         }
     }
 
