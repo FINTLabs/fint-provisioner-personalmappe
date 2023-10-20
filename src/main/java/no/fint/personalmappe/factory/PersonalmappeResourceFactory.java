@@ -1,5 +1,6 @@
 package no.fint.personalmappe.factory;
 
+import lombok.extern.slf4j.Slf4j;
 import no.fint.model.administrasjon.organisasjon.Organisasjonselement;
 import no.fint.model.administrasjon.personal.Personalressurs;
 import no.fint.model.felles.Person;
@@ -16,9 +17,11 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 @Component
+@Slf4j
 public class PersonalmappeResourceFactory {
 
     public PersonalmappeResource toPersonalmappeResource(GraphQLPersonalmappe.Personalressurs personalressurs, OrganisationProperties organisationProperties, List<String> administrativEnheter) {
+
         PersonalmappeResource personalmappeResource = new PersonalmappeResource();
 
         Optional<GraphQLPersonalmappe.Arbeidsforhold> arbeidsforhold = Optional.ofNullable(personalressurs)

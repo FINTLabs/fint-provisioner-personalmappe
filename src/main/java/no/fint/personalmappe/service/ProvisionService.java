@@ -107,7 +107,7 @@ public class ProvisionService {
 
     private Mono<PersonalmappeResource> getPersonnelFolder(String username) {
         GraphQLQuery graphQLQuery = new GraphQLQuery(GRAPHQL_QUERY, Collections.singletonMap("brukernavn", username));
-
+        log.trace("Let´s get personal folder for {}", username);
         return fintRepository.post(GraphQLPersonalmappe.class, graphQLQuery, graphqlEndpoint)
                 .map(graphQLPersonnelFolder -> Optional.ofNullable(graphQLPersonnelFolder.getResult())
                         .map(GraphQLPersonalmappe.Result::getPersonalressurs)
@@ -121,6 +121,7 @@ public class ProvisionService {
     }
 
     private Mono<MongoDBPersonalmappe> updatePersonnelFolder(PersonalmappeResource personnelFolder) {
+        log.debug("Update personal folder for {}", PersonnelUtilities.getUsername(personnelFolder));
         String orgId = organisationProperties.getOrgId();
 
         String id = orgId + "_" + PersonnelUtilities.getNIN(personnelFolder);
@@ -134,6 +135,7 @@ public class ProvisionService {
     }
 
     private Mono<MongoDBPersonalmappe> create(String orgId, String id, PersonalmappeResource personnelFolder) {
+        log.debug("Create personal folder for {}", PersonnelUtilities.getUsername(personnelFolder));
         doTransformation(personnelFolder);
 
         return fintRepository.postForEntity(personnelFolder, personnelFolderEndpoint)
@@ -181,13 +183,14 @@ public class ProvisionService {
     }
 
     private Predicate<PersonalmappeResource> validPersonnelFolder() {
+        log.debug("Validate personal folder...");
         return personnelFolder -> {
             if (Objects.nonNull(personnelFolder.getNavn()) &&
                     !personnelFolder.getPersonalressurs().isEmpty() &&
                     !personnelFolder.getPerson().isEmpty() &&
                     !personnelFolder.getArbeidssted().isEmpty() &&
                     !personnelFolder.getLeder().isEmpty()) {
-
+                log.debug("...personal folder is OK.");
                 Optional<Link> identical = personnelFolder.getPersonalressurs().stream()
                         .filter(link -> personnelFolder.getLeder().contains(link))
                         .findAny();
@@ -204,7 +207,7 @@ public class ProvisionService {
                         .map(href -> StringUtils.substringAfterLast(href, "/"))
                         .noneMatch(excluded::contains);
             }
-
+            log.trace(" ..invalid personal folder.");
             return false;
         };
     }
