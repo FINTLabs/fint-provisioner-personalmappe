@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        org: [ bfk-no, ofk-no ]
+        org: [ afk-no, bfk-no, ofk-no ]
         cluster: [ aks-beta-fint-2021-11-23 ]
         include:
           - cluster: aks-beta-fint-2021-11-23
