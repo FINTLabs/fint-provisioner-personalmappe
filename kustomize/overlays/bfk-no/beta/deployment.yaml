@@ -25,7 +25,7 @@ spec:
             - {name: organisation.delta, value: "true"}
             - {name: organisation.bulk-limit, value: "42"}
             - {name: organisation.personnel-resource-category, value: "F, M"}
-            #- {name: organisation.administrative-units-excluded, value: "3, 11, 380"}
+            - {name: organisation.administrative-units-excluded, value: ""}
             - {name: organisation.archive-resource, value: "false"}
             - {name: organisation.history-limit, value: "5"}
             - {name: organisation.org-id, value: bfk-no}
