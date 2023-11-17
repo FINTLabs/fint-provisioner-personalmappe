@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         org: [ afk-no, bfk-no, ofk-no ]
-        cluster: [ aks-beta-fint-2021-11-23 ]
+        cluster: [ aks-beta-fint-2021-11-23, aks-api-fint-2022-02-08 ]
         include:
           - cluster: aks-beta-fint-2021-11-23
             deploy-every-branch: true
