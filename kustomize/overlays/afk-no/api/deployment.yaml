@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: provisioner-personalmappe
+  namespace: afk-no
+spec:
+  template:
+    spec:
+      containers:
+        - name: provisioner-personalmappe
+          envFrom:
+            - secretRef:
+                name: personalmappe-secrets
+            - secretRef:
+                name: personalmappe-api
+          env:
+            - {name: fint.endpoints.graphql, value: https://api.felleskomponent.no/graphql/graphql}
+            - {name: fint.endpoints.personnel-resource, value: https://api.felleskomponent.no/administrasjon/personal/personalressurs}
+            - {name: fint.endpoints.personnel-folder, value: https://api.felleskomponent.no/arkiv/personal/personalmappe}
+            - {name: fint.endpoints.administrative-unit, value: https://api.felleskomponent.no/arkiv/noark/administrativenhet}
+            - {name: fint.endpoints.archive-resource, value: https://api.felleskomponent.no/arkiv/noark/arkivressurs}
+            - {name: fint.cron.bulk, value: "0 0 18 * * MON-FRI"}
+            - {name: fint.cron.delta, value: "0 30 8-16 * * MON-FRI"}
+            - {name: organisation.bulk, value: "false"}
+            - {name: organisation.delta, value: "false"}
+            - {name: organisation.bulk-limit, value: "42"}
+            - {name: organisation.personnel-resource-category, value: "F, M"}
+            - {name: organisation.administrative-units-excluded, value: ""}
+            - {name: organisation.archive-resource, value: "false"}
+            - {name: organisation.history-limit, value: "5"}
+            - {name: organisation.org-id, value: afk-no}
+            - {name: logging.level.no.fint, value: TRACE}
