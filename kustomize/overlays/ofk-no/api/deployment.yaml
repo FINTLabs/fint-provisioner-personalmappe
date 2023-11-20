@@ -23,9 +23,9 @@ spec:
             - {name: fint.cron.delta, value: "0 30 8-16 * * MON-FRI"}
             - {name: organisation.bulk, value: "false"}
             - {name: organisation.delta, value: "false"}
-            - {name: organisation.bulk-limit, value: "42"}
+            - {name: organisation.bulk-limit, value: "0"}
             - {name: organisation.personnel-resource-category, value: "F, M"}
-            - {name: organisation.administrative-units-excluded, value: ""}
+            - {name: organisation.administrative-units-excluded, value: "344,345"}
             - {name: organisation.archive-resource, value: "false"}
             - {name: organisation.history-limit, value: "5"}
             - {name: organisation.org-id, value: ofk-no}
