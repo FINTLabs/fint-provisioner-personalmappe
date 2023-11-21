@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: viken-no
+namespace: ofk-no
 
 resources:
   - ../../../base
@@ -9,8 +9,8 @@ resources:
   - fint-client.yaml
 
 commonLabels:
-  app.kubernetes.io/instance: provisioner-personalmappe_viken-no
-  fintlabs.no/org-id: viken.no
+  app.kubernetes.io/instance: provisioner-personalmappe_ofk-no
+  fintlabs.no/org-id: ofk.no
 
 patches:
 

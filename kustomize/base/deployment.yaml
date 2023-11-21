@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: provisioner-personalmappe-viken
+  name: provisioner-personalmappe
   labels:
-    io.kompose.service: provisioner-personalmappe-viken
+    io.kompose.service: provisioner-personalmappe
 spec:
   selector:
     matchLabels:
-      io.kompose.service: provisioner-personalmappe-viken
+      io.kompose.service: provisioner-personalmappe
   template:
     metadata:
       annotations:
@@ -15,10 +15,10 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/scrape: "true"
       labels:
-        io.kompose.service: provisioner-personalmappe-viken
+        io.kompose.service: provisioner-personalmappe
     spec:
       containers:
-        - name: provisioner-personalmappe-viken
+        - name: provisioner-personalmappe
           image: ghcr.io/fintlabs/fint-provisioner-personalmappe:latest
           livenessProbe:
             failureThreshold: 3
@@ -46,55 +46,4 @@ spec:
             - {name: JAVA_TOOL_OPTIONS, value: '-XX:+ExitOnOutOfMemoryError -Xmx3G -verbose:gc'}
             - {name: logging.level.no.fint, value: INFO}
             - {name: management.endpoints.web.exposure.include, value: "health,metrics,prometheus"}
-            - {name: fint.endpoints.graphql, value: https://api.felleskomponent.no/graphql/graphql}
-            - {name: fint.endpoints.personnel-resource, value: https://api.felleskomponent.no/administrasjon/personal/personalressurs}
-            - {name: fint.endpoints.personnel-folder, value: https://api.felleskomponent.no/arkiv/personal/personalmappe}
-            - {name: fint.endpoints.administrative-unit, value: https://api.felleskomponent.no/arkiv/noark/administrativenhet}
-            - {name: fint.endpoints.archive-resource, value: https://api.felleskomponent.no/arkiv/noark/arkivressurs}
-            - {name: fint.cron.bulk, value: "0 0 18 * * MON-FRI"}
-            - {name: fint.cron.delta, value: "0 0 8-16 * * MON-FRI"}
-            - {name: organisation.bulk, value: "true"}
-            - {name: organisation.delta, value: "false"}
-            - {name: organisation.bulk-limit, value: "0"}
-            - {name: organisation.personnel-resource-category, value: "F, M"}
-            - {name: organisation.administrative-units-excluded, value: "3, 11, 380"}
-            - {name: organisation.archive-resource, value: "false"}
-            - {name: organisation.history-limit, value: "5"}
-            - {name: organisation.org-id, value: viken-no}
-            - {name: organisation.registration, value: viken}
-            - name: spring.security.oauth2.client.registration.viken.client-id
-              valueFrom:
-                secretKeyRef:
-                  key: client-id
-                  name: viken-personalmapper-service
-            - name: spring.security.oauth2.client.registration.viken.client-secret
-              valueFrom:
-                secretKeyRef:
-                  key: client-secret
-                  name: viken-personalmapper-service
-            - name: organisation.username
-              valueFrom:
-                secretKeyRef:
-                  key: username
-                  name: viken-personalmapper-service
-            - name: organisation.password
-              valueFrom:
-                secretKeyRef:
-                  key: password
-                  name: viken-personalmapper-service
-            - name: spring.security.oauth2.client.registration.viken.authorization-grant-type
-              value: password
-            - name: spring.security.oauth2.client.registration.viken.scope
-              value: fint-client
-            - name: spring.security.oauth2.client.registration.viken.provider
-              value: fint
-            - name: spring.security.oauth2.client.provider.fint.token-uri
-              value: https://idp.felleskomponent.no/nidp/oauth/nam/token
-            - name: spring.data.mongodb.uri
-              valueFrom:
-                secretKeyRef:
-                  name: fint-mongo-db
-                  key: mongodb
-            - name: spring.data.mongodb.database
-              value: personalmappe-api
-
+            - {name: organisation.registration, value: asset}

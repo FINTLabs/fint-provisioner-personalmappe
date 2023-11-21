@@ -1,0 +1,24 @@
+apiVersion: fintlabs.no/v1alpha1
+kind: FintClient
+metadata:
+  name: personalmappe-beta
+  namespace: bfk-no
+  labels:
+    app.kubernetes.io/name: personalmappe-provisioner
+    app.kubernetes.io/instance: personalmappe-provisioner_bfk-no
+    app.kubernetes.io/version: latest
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: arkiv
+    fintlabs.no/team: arkiv
+    fintlabs.no/org-id: bfk.no
+
+spec:
+  orgId: bfk.no
+  note: Brukes av personalmappe-provisioner service.
+  components:
+    - administrasjon_kodeverk
+    - administrasjon_personal
+    - administrasjon_organisasjon
+    - arkiv_kodeverk
+    - arkiv_noark
+    - arkiv_personal
