@@ -53,9 +53,6 @@ jobs:
           - cluster: aks-beta-fint-2021-11-23
             deploy-every-branch: true
 
-          - cluster: aks-api-fint-2022-02-08
-            deploy-every-branch: true
-
     steps:
       - uses: actions/checkout@v3
 
