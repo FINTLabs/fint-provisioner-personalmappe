@@ -25,7 +25,7 @@ spec:
             - {name: organisation.delta, value: "false"}
             - {name: organisation.bulk-limit, value: "0"}
             - {name: organisation.personnel-resource-category, value: "F, M"}
-            - {name: organisation.administrative-units-excluded, value: "4"}
+            - {name: organisation.administrative-units-excluded, value: "4,69,70,74,79,80"} # Utgåtte enheter per 2023-11-27: 69,70,74,79,80
             - {name: organisation.archive-resource, value: "false"}
             - {name: organisation.history-limit, value: "5"}
             - {name: organisation.org-id, value: afk-no}
