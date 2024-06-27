@@ -1,4 +1,4 @@
-FROM ghcr.io/fintlabs/fint-personalmappe-frontend:latest as client
+FROM ghcr.io/fintlabs/fint-personalmappe-frontend:vilvivite-b812e2d as client
 
 FROM gradle:6.3.0-jdk11 as builder
 USER root
