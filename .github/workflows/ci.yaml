@@ -22,7 +22,7 @@ jobs:
           distribution: 'corretto'
           cache: 'gradle'
 
-      - uses: gradle/wrapper-validation-action@v1
+      - uses: gradle/wrapper-validation-action@v3
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v3
         with:
