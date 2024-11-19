@@ -1,6 +1,6 @@
 FROM ghcr.io/fintlabs/fint-personalmappe-frontend:latest as client
 
-FROM gradle:6.3.0-jdk11 as builder
+FROM gradle:8.10-jdk21 as builder
 USER root
 COPY . .
 COPY --from=client /src/build/ src/main/resources/static/
