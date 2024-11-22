@@ -40,16 +40,18 @@ public class DeltaService {
             provisionService.updateAdministrativeUnitSystemIds();
         }
 
-        List<PersonalressursResource> personnelResources = fintRepository.getUpdates(PersonalressursResources.class, personnelResourceEndpoint)
+        fintRepository.getUpdates(PersonalressursResources.class, personnelResourceEndpoint)
                 .flatMapIterable(PersonalressursResources::getContent)
                 .collectList()
-                .blockOptional()
-                .orElseThrow(IllegalArgumentException::new);
+                .subscribe(hardWorkers -> {
+                    if (hardWorkers.isEmpty()) {
+                        throw new IllegalArgumentException("No personalressurs found");
+                    }
 
-        List<String> usernames = provisionService.getUsernames(personnelResources);
+                    List<String> usernames = provisionService.getUsernames(hardWorkers);
+                    log.info("Delta provision {} users", usernames.size());
 
-        log.info("Delta provision {} users", usernames.size());
-
-        provisionService.run(usernames, usernames.size()).subscribe(log::trace);
+                    provisionService.run(usernames, usernames.size()).subscribe(log::trace);
+                });
     }
 }
