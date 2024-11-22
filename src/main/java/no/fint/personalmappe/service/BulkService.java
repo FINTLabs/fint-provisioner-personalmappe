@@ -46,18 +46,15 @@ public class BulkService {
                         throw new IllegalArgumentException("No personalressurs found");
                     }
 
-                    List<PersonalressursResource> personnelResources = hardWorkers;
-
                     if (organisationProperties.isArchiveResource()) {
                         log.info("Updating Archive resources...");
 
-                        provisionService.updateArchiveResource(personnelResources);
+                        provisionService.updateArchiveResource(hardWorkers);
                     }
 
-                    List<String> usernames = provisionService.getUsernames(personnelResources);
+                    List<String> usernames = provisionService.getUsernames(hardWorkers);
 
                     long limit = (bulkLimit == 0 ? usernames.size() : bulkLimit);
-
                     log.info("Bulk provision {} of {} users", limit, usernames.size());
 
                     provisionService.run(usernames, limit).subscribe(log::trace);
