@@ -257,15 +257,20 @@ public class ProvisionService {
     }
 
     public void updateAdministrativeUnitSystemIds() {
-        administrativeUnitSystemIds = fintRepository.get(AdministrativEnhetResources.class, administrativeUnitEndpoint)
+        fintRepository.get(AdministrativEnhetResources.class, administrativeUnitEndpoint)
                 .flatMapIterable(AdministrativEnhetResources::getContent)
                 .flatMapIterable(AdministrativEnhetResource::getOrganisasjonselement)
                 .map(Link::getHref)
                 .map(id -> StringUtils.substringAfterLast(id, "/"))
                 .collectList()
-                .blockOptional()
-                .filter(ids -> ids.size() > 0)
-                .orElseThrow(IllegalArgumentException::new);
+                .filter(ids -> !ids.isEmpty())
+                .subscribe(systemIds -> {
+                    if (systemIds.isEmpty()) {
+                        throw new IllegalArgumentException("No administrativ enhet found");
+                    }
+
+                    administrativeUnitSystemIds = systemIds;
+                });
     }
 
     public List<String> getUsernames(List<PersonalressursResource> personnelResources) {

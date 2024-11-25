@@ -38,24 +38,26 @@ public class BulkService {
     public void bulk(long bulkLimit) {
         provisionService.updateAdministrativeUnitSystemIds();
 
-        List<PersonalressursResource> personnelResources = fintRepository.get(PersonalressursResources.class, personnelResourceEndpoint)
+        fintRepository.get(PersonalressursResources.class, personnelResourceEndpoint)
                 .flatMapIterable(PersonalressursResources::getContent)
                 .collectList()
-                .blockOptional()
-                .orElseThrow(IllegalArgumentException::new);
+                .subscribe(hardWorkers -> {
+                    if (hardWorkers.isEmpty()) {
+                        throw new IllegalArgumentException("No personalressurs found");
+                    }
 
-        if (organisationProperties.isArchiveResource()) {
-            log.info("Updating Archive resources...");
+                    if (organisationProperties.isArchiveResource()) {
+                        log.info("Updating Archive resources...");
 
-            provisionService.updateArchiveResource(personnelResources);
-        }
+                        provisionService.updateArchiveResource(hardWorkers);
+                    }
 
-        List<String> usernames = provisionService.getUsernames(personnelResources);
+                    List<String> usernames = provisionService.getUsernames(hardWorkers);
 
-        long limit = (bulkLimit == 0 ? usernames.size() : bulkLimit);
+                    long limit = (bulkLimit == 0 ? usernames.size() : bulkLimit);
+                    log.info("Bulk provision {} of {} users", limit, usernames.size());
 
-        log.info("Bulk provision {} of {} users", limit, usernames.size());
-
-        provisionService.run(usernames, limit).subscribe(log::trace);
+                    provisionService.run(usernames, limit).subscribe(log::trace);
+                });
     }
 }
