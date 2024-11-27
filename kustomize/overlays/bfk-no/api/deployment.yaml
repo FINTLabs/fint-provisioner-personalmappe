@@ -21,7 +21,7 @@ spec:
             - {name: fint.endpoints.archive-resource, value: https://api.felleskomponent.no/arkiv/noark/arkivressurs}
             - {name: fint.cron.bulk, value: "0 20 20 * * MON-FRI"}
             - {name: fint.cron.delta, value: "0 30 8-16 * * MON-FRI"}
-            - {name: organisation.bulk, value: "false"}
+            - {name: organisation.bulk, value: "true"}
             - {name: organisation.delta, value: "false"}
             - {name: organisation.bulk-limit, value: "0"}
             - {name: organisation.personnel-resource-category, value: "F, M"}
