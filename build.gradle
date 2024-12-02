@@ -34,7 +34,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
 	implementation 'org.apache.commons:commons-lang3'
-	implementation 'com.google.guava:guava:33.2.1-jre'
+	implementation 'com.google.guava:guava:33.3.1-jre'
 
 	implementation 'org.openjdk.nashorn:nashorn-core:15.4'
 
