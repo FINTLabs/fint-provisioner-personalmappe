@@ -36,7 +36,8 @@ public class RetryService {
         List<String> usernames = mongoDBRepository.findAll()
                 .stream()
                 .filter(documents ->
-                        documents.getStatus().equals(HttpStatus.INTERNAL_SERVER_ERROR))
+                        documents.getStatus().equals(HttpStatus.INTERNAL_SERVER_ERROR) &&
+                                documents.getOrgId().equals(organisationProperties.getOrgId()))
                 .map(MongoDBPersonalmappe::getUsername)
                 .toList();
 
