@@ -20,12 +20,12 @@ spec:
             - {name: fint.endpoints.administrative-unit, value: https://beta.felleskomponent.no/arkiv/noark/administrativenhet}
             - {name: fint.endpoints.archive-resource, value: https://beta.felleskomponent.no/arkiv/noark/arkivressurs}
             - {name: fint.cron.bulk, value: "0 0 18 * * MON-FRI"}
-            - {name: fint.cron.delta, value: "0 30 8-16 * * MON-FRI"}
-            - {name: fint.cron.retry, value: "0 0 13 * * MON-FRI" }
-            - {name: organisation.bulk, value: "false"}
+            - {name: fint.cron.delta, value: "0 40 8-16 * * MON-FRI"}
+            - {name: fint.cron.retry, value: "0 50 10 * * MON-FRI" }
+            - {name: organisation.bulk, value: "true"}
             - {name: organisation.delta, value: "false"}
             - {name: organisation.retry, value: "true"}
-            - {name: organisation.bulk-limit, value: "42"}
+            - {name: organisation.bulk-limit, value: "11"}
             - {name: organisation.personnel-resource-category, value: "F, M"}
             - {name: organisation.administrative-units-excluded, value: ""}
             - {name: organisation.archive-resource, value: "false"}
