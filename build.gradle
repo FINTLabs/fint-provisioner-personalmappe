@@ -1,11 +1,11 @@
 plugins {
-	id 'org.springframework.boot' version '2.7.18'
+	id 'org.springframework.boot' version '3.4.4'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'java'
 	id 'groovy'
 }
 
-group = 'no.fint'
+group = 'no.novari'
 
 java {
 	toolchain {
@@ -22,6 +22,15 @@ configurations {
 repositories {
 	maven { url 'https://repo.fintlabs.no/releases' }
 	mavenCentral()
+}
+
+dependencyManagement {
+	dependencies {
+		// Azure Cosmos DB server version 3.6 :-(
+		dependency 'org.mongodb:mongodb-driver-sync:5.1.4'
+		dependency 'org.mongodb:mongodb-driver-core:5.1.4'
+		dependency 'org.springframework.data:spring-data-mongodb:4.3.10'
+	}
 }
 
 dependencies {
@@ -44,15 +53,14 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
-	testImplementation('org.springframework.boot:spring-boot-starter-test') {
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-	}
+	testImplementation('org.springframework.boot:spring-boot-starter-test')
+
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.spockframework:spock-spring:2.4-M5-groovy-4.0'
 	testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 	testImplementation 'com.squareup.okhttp3:okhttp:4.12.0'
-	testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.2.0'
+	testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring3x:4.15.0'
 
 	implementation "no.fint:fint-arkiv-resource-model-java:${apiVersion}"
 	implementation "no.fint:fint-administrasjon-resource-model-java:${apiVersion}"
