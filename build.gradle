@@ -47,7 +47,7 @@ dependencies {
 
 	implementation 'org.openjdk.nashorn:nashorn-core:15.6'
 
-	implementation 'org.apache.poi:poi:5.3.0'
+	implementation 'org.apache.poi:poi:5.4.0'
 	implementation 'org.apache.poi:poi-ooxml:5.4.0'
 
 	compileOnly 'org.projectlombok:lombok'
