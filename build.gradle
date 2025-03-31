@@ -29,7 +29,7 @@ dependencyManagement {
 		// Azure Cosmos DB server version 3.6 :-(
 		dependency 'org.mongodb:mongodb-driver-sync:5.1.4'
 		dependency 'org.mongodb:mongodb-driver-core:5.1.4'
-		dependency 'org.springframework.data:spring-data-mongodb:4.3.10'
+		dependency 'org.springframework.data:spring-data-mongodb:4.4.4'
 	}
 }
 
