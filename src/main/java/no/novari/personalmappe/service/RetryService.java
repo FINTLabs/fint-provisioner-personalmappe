@@ -41,7 +41,7 @@ public class RetryService {
                 .map(MongoDBPersonalmappe::getUsername)
                 .toList();
 
-        log.info("As an extraordinary service from Arkivlaget, we're retring provision of {} users. Cross your fingers.",
+        log.info("As an extraordinary service from Arkivlaget, we're retrying provision of {} users. Cross your fingers.",
                 usernames.size());
 
         provisionService.run(usernames, usernames.size())

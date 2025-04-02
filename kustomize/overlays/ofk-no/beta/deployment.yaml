@@ -19,13 +19,13 @@ spec:
             - {name: fint.endpoints.personnel-folder, value: https://beta.felleskomponent.no/arkiv/personal/personalmappe}
             - {name: fint.endpoints.administrative-unit, value: https://beta.felleskomponent.no/arkiv/noark/administrativenhet}
             - {name: fint.endpoints.archive-resource, value: https://beta.felleskomponent.no/arkiv/noark/arkivressurs}
-            - {name: fint.cron.bulk, value: "0 0 18 * * MON-FRI"}
+            - {name: fint.cron.bulk, value: "0 17 17 * * MON-FRI"}
             - {name: fint.cron.delta, value: "0 30 8-16 * * MON-FRI"}
             - {name: fint.cron.retry, value: "0 30 12 * * MON-FRI" }
-            - {name: organisation.bulk, value: "false" }
+            - {name: organisation.bulk, value: "true" }
             - {name: organisation.delta, value: "false" }
             - {name: organisation.retry, value: "false" }
-            - {name: organisation.bulk-limit, value: "42"}
+            - {name: organisation.bulk-limit, value: "64"}
             - {name: organisation.personnel-resource-category, value: "F, M"}
             - {name: organisation.administrative-units-excluded, value: ""}
             - {name: organisation.archive-resource, value: "false"}
