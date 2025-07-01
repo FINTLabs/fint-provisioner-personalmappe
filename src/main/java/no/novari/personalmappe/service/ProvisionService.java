@@ -96,7 +96,7 @@ public class ProvisionService {
 
     public Flux<String> run(List<String> usernames, long limit) {
         return Flux.fromIterable(usernames)
-                .limitRequest(limit)
+                .take(limit)
                 .delayElements(Duration.ofMillis(1000))
                 .concatMap(this::getPersonnelFolder)
                 .flatMap(this::updatePersonnelFolder)
