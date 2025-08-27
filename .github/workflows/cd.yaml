@@ -12,7 +12,7 @@ jobs:
       DOCKER_BUILDKIT: 1
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Docker meta
         id: meta
@@ -26,7 +26,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v3.4.0
+        uses: docker/login-action@v3.5.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -54,7 +54,7 @@ jobs:
             deploy-every-branch: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get environment
         id: environment
@@ -95,7 +95,7 @@ jobs:
 
       - name: Deploy to Kubernetes
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || matrix.deploy-every-branch == true
-        uses: azure/k8s-deploy@v5
+        uses: azure/k8s-deploy@v5.0.3
         with:
           action: deploy
           manifests: ${{ steps.bake.outputs.manifestsBundle }}
