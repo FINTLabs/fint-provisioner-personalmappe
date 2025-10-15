@@ -22,7 +22,7 @@ spec:
             - {name: fint.cron.bulk, value: "0 21 21 * * MON-FRI"}
             - {name: fint.cron.delta, value: "0 30 8-16 * * MON-FRI"}
             - {name: fint.cron.retry, value: "0 25 5 * * MON-FRI" }
-            - {name: organisation.bulk, value: "false"}
+            - {name: organisation.bulk, value: "true"}
             - {name: organisation.delta, value: "false"}
             - {name: organisation.retry, value: "true" }
             - {name: organisation.bulk-limit, value: "0"}
