@@ -48,8 +48,8 @@ dependencies {
 
 	implementation 'org.openjdk.nashorn:nashorn-core:15.7'
 
-	implementation 'org.apache.poi:poi:5.4.1'
-	implementation 'org.apache.poi:poi-ooxml:5.4.1'
+	implementation 'org.apache.poi:poi:5.5.0'
+	implementation 'org.apache.poi:poi-ooxml:5.5.0'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
