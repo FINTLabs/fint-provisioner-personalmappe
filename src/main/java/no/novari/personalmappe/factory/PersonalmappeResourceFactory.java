@@ -1,12 +1,12 @@
 package no.novari.personalmappe.factory;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.administrasjon.organisasjon.Organisasjonselement;
-import no.fint.model.administrasjon.personal.Personalressurs;
-import no.fint.model.felles.Person;
-import no.fint.model.felles.kompleksedatatyper.Personnavn;
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
+import no.novari.fint.model.administrasjon.organisasjon.Organisasjonselement;
+import no.novari.fint.model.administrasjon.personal.Personalressurs;
+import no.novari.fint.model.felles.Person;
+import no.novari.fint.model.felles.kompleksedatatyper.Personnavn;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.novari.personalmappe.model.GraphQLPersonalmappe;
 import no.novari.personalmappe.properties.OrganisationProperties;
 import org.springframework.stereotype.Component;

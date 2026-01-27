@@ -1,9 +1,9 @@
 package no.novari.personalmappe.repository
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import no.fint.model.resource.AbstractCollectionResources
-import no.fint.model.resource.administrasjon.personal.PersonalressursResources
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource
+import no.novari.fint.model.resource.AbstractCollectionResources
+import no.novari.fint.model.resource.administrasjon.personal.PersonalressursResources
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource
 import no.novari.personalmappe.model.GraphQLPersonalmappe
 import no.novari.personalmappe.model.GraphQLQuery
 import no.novari.personalmappe.properties.OrganisationProperties

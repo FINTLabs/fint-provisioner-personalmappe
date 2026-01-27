@@ -1,7 +1,7 @@
 package no.novari.personalmappe.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.novari.personalmappe.model.MongoDBPersonalmappe;
 import no.novari.personalmappe.properties.OrganisationProperties;
 import no.novari.personalmappe.repository.MongoDBRepository;

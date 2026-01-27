@@ -1,12 +1,12 @@
 package no.novari.personalmappe.service
 
-import no.fint.model.administrasjon.organisasjon.Organisasjonselement
-import no.fint.model.administrasjon.personal.Personalressurs
-import no.fint.model.felles.Person
-import no.fint.model.felles.kompleksedatatyper.Personnavn
-import no.fint.model.resource.Link
-import no.fint.model.resource.arkiv.noark.PartResource
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource
+import no.novari.fint.model.administrasjon.organisasjon.Organisasjonselement
+import no.novari.fint.model.administrasjon.personal.Personalressurs
+import no.novari.fint.model.felles.Person
+import no.novari.fint.model.felles.kompleksedatatyper.Personnavn
+import no.novari.fint.model.resource.Link
+import no.novari.fint.model.resource.arkiv.noark.PartResource
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource
 import no.novari.personalmappe.factory.PersonalmappeResourceFactory
 import no.novari.personalmappe.model.GraphQLPersonalmappe
 import no.novari.personalmappe.model.MongoDBPersonalmappe

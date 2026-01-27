@@ -1,7 +1,7 @@
 package no.novari.personalmappe.policy.helper;
 
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.novari.personalmappe.exception.UnableToGetLink;
 import org.apache.commons.lang3.StringUtils;
 

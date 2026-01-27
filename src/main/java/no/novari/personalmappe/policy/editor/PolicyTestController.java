@@ -2,7 +2,7 @@ package no.novari.personalmappe.policy.editor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.novari.personalmappe.service.PolicyService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
