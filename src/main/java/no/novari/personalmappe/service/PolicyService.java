@@ -2,7 +2,7 @@ package no.novari.personalmappe.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.novari.personalmappe.policy.helper.LinkHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;

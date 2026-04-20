@@ -1,7 +1,7 @@
 package no.novari.personalmappe.service;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.administrasjon.personal.PersonalressursResources;
+import no.novari.fint.model.resource.administrasjon.personal.PersonalressursResources;
 import no.novari.personalmappe.properties.OrganisationProperties;
 import no.novari.personalmappe.repository.FintRepository;
 import org.springframework.beans.factory.annotation.Value;

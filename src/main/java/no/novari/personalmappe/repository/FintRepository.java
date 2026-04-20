@@ -1,7 +1,7 @@
 package no.novari.personalmappe.repository;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import no.novari.personalmappe.model.GraphQLQuery;
 import no.novari.personalmappe.model.LastUpdated;
 import no.novari.personalmappe.properties.OrganisationProperties;

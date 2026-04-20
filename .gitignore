@@ -37,3 +37,4 @@ out/
 
 ### Testing ###
 src/main/resources/application-*.yml
+/.java-version

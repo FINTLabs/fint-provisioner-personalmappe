@@ -1,8 +1,8 @@
 package no.novari.personalmappe
 
-import no.fint.model.felles.kompleksedatatyper.Identifikator
-import no.fint.model.resource.Link
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource
+import no.novari.fint.model.felles.kompleksedatatyper.Identifikator
+import no.novari.fint.model.resource.Link
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource
 
 class TestFactory {
 

@@ -1,6 +1,6 @@
 package no.novari.personalmappe.service
 
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource
 import no.novari.personalmappe.TestFactory
 import spock.lang.Specification
 

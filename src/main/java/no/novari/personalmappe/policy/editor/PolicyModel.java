@@ -3,7 +3,7 @@ package no.novari.personalmappe.policy.editor;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource;
 
 @Data
 @AllArgsConstructor

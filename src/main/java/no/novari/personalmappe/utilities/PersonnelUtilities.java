@@ -1,7 +1,7 @@
 package no.novari.personalmappe.utilities;
 
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;

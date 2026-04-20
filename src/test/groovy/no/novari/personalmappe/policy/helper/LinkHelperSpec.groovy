@@ -1,6 +1,6 @@
 package no.novari.personalmappe.policy.helper
 
-import no.fint.model.resource.arkiv.personal.PersonalmappeResource
+import no.novari.fint.model.resource.arkiv.personal.PersonalmappeResource
 import no.novari.personalmappe.TestFactory
 import no.novari.personalmappe.exception.UnableToGetLink
 import spock.lang.Specification
