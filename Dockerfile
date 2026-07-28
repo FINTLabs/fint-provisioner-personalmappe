@@ -3,7 +3,7 @@ FROM ghcr.io/fintlabs/fint-personalmappe-frontend:latest AS client
 FROM gradle:9.3-jdk21 AS builder
 USER root
 COPY . .
-COPY --from=client /src/build/ src/main/resources/static/
+COPY --from=client /src/dist/ src/main/resources/static/
 RUN gradle --no-daemon build
 
 FROM gcr.io/distroless/java21
