@@ -15,6 +15,10 @@
     - [Examples](#examples-1)
 - [Configuration](#configuration)
 
+## Dependencies
+
+- [fint-personalmappe-frontend](https://github.com/FINTLabs/fint-personalmappe-frontend) - Frontend application bundled into the Docker image at build time.
+
 This service provisions employee files in the archive system using FINT Core APIs.
 
 The main features are:
