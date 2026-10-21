@@ -47,6 +47,9 @@ dependencies {
 	implementation 'com.google.guava:guava:33.6.0-jre'
 
 	implementation 'org.openjdk.nashorn:nashorn-core:15.7'
+	// Fix for CVE, due to transitive dependencies in nashorn-core
+	implementation('org.ow2.asm:asm-commons:9.11.1')
+	implementation('org.ow2.asm:asm-analysis:9.11.1')
 
 	implementation 'org.apache.poi:poi:5.5.1'
 	implementation 'org.apache.poi:poi-ooxml:5.5.1'
