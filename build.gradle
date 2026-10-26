@@ -59,8 +59,8 @@ dependencies {
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.spockframework:spock-spring:2.4-groovy-4.0'
-	testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
-	testImplementation 'com.squareup.okhttp3:okhttp:4.12.0'
+	testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.1'
+	testImplementation 'com.squareup.okhttp3:okhttp:4.12.1'
 	testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring3x:4.24.0'
 
 	implementation "no.novari:fint-arkiv-resource-model-java:${apiVersion}"
