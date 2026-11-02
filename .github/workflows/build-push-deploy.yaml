@@ -1,0 +1,49 @@
+name: Build, Push and Deploy
+
+on: push
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+
+  build-push:
+    uses: fintlabs/shared-workflows/.github/workflows/java-gradle-build-push.yaml@v0
+    with:
+      java-version: '25'
+
+  beta:
+    needs: build-push
+    uses: fintlabs/shared-workflows/.github/workflows/kustomize-deploy.yaml@v0
+    strategy:
+      matrix:
+        org:
+          - afk-no
+          - bfk-no
+          - ofk-no
+    with:
+      tags: ${{ needs.build-push.outputs.tags }}
+      environment: beta
+      org: ${{ matrix.org }}
+      deploy-every-branch: true
+    secrets: inherit
+
+  prod:
+    needs: [ build-push, beta ]
+    uses: fintlabs/shared-workflows/.github/workflows/kustomize-deploy.yaml@v0
+    strategy:
+      matrix:
+        org:
+           - afk-no
+           - bfk-no
+           - ofk-no
+    with:
+      tags: ${{ needs.build-push.outputs.tags }}
+      environment: api
+      org: ${{ matrix.org }}
+    secrets: inherit
