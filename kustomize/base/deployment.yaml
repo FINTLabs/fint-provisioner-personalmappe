@@ -43,7 +43,7 @@ spec:
               path: /actuator/health/readiness
           env:
             - {name: TZ, value: Europe/Oslo}
-            - {name: JAVA_TOOL_OPTIONS, value: '-XX:+ExitOnOutOfMemoryError -Xmx3G -verbose:gc'}
+            - {name: JAVA_TOOL_OPTIONS, value: '-XX:+ExitOnOutOfMemoryError -XX:-UseBASE64Intrinsics -Xmx3G -verbose:gc'}
             - {name: logging.level.no.fint, value: INFO}
             - {name: management.endpoints.web.exposure.include, value: "health,metrics,prometheus"}
             - {name: organisation.registration, value: asset}
