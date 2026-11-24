@@ -1,11 +1,19 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
+    groups:
+      github-actions-dependencies:
+        patterns:
+          - "*"
     directory: "/"
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "gradle"
+    groups:
+      gradle-dependencies:
+        patterns:
+          - "*"
     directory: "/"
     schedule:
       interval: "weekly"
@@ -15,6 +23,10 @@ updates:
           - "version-update:semver-major"
 
   - package-ecosystem: "docker"
+    groups:
+      docker-dependencies:
+        patterns:
+          - "*"
     directory: "/"
     schedule:
       interval: "weekly"
