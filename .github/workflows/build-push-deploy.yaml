@@ -13,13 +13,13 @@ permissions:
 jobs:
 
   build-push:
-    uses: fintlabs/shared-workflows/.github/workflows/java-gradle-build-push.yaml@v0
+    uses: fintlabs/shared-workflows/.github/workflows/java-gradle-build-push.yaml@804ab03dfb548902117bf4152e6ae276d9eb0615 # v0
     with:
       java-version: '25'
 
   beta:
     needs: build-push
-    uses: fintlabs/shared-workflows/.github/workflows/kustomize-deploy.yaml@v0
+    uses: fintlabs/shared-workflows/.github/workflows/kustomize-deploy.yaml@804ab03dfb548902117bf4152e6ae276d9eb0615 # v0
     strategy:
       matrix:
         org:
@@ -35,7 +35,7 @@ jobs:
 
   prod:
     needs: [ build-push, beta ]
-    uses: fintlabs/shared-workflows/.github/workflows/kustomize-deploy.yaml@v0
+    uses: fintlabs/shared-workflows/.github/workflows/kustomize-deploy.yaml@804ab03dfb548902117bf4152e6ae276d9eb0615 # v0
     strategy:
       matrix:
         org:
